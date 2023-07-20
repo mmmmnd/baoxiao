@@ -78,15 +78,11 @@ $ SOURCE 根目录SQL文件夹SQL文件
 
 请在根目录下的 [——baoxiao-admin\src\main\resources\*](https://github.com/mmmmnd/baoxiao/tree/master/baoxiao-admin/src/main/resources) 文件目录修改配置。
 
-### 3.6.修改 前端后台Api 地址
+### 3.6.修改 后台Api 地址
 
 请在根目录下的 [——baoxiao-ui\\.env.*](https://github.com/mmmmnd/baoxiao/tree/master/baoxiao-ui) 修改VUE_APP_BASE_API = api地址。
 
-### 3.7.修改 前端小程序Api 地址
-
-请在根目录下的 [——baoxiao-app\src\config\index.ts](https://github.com/mmmmnd/baoxiao/tree/master/baoxiao-ui) 修改 BASE_URL = api地址。
-
-### 3.8.启动前端项目
+### 3.7.启动前端项目
 
 ```
 # 启动后台管理系统
