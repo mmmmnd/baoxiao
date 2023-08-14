@@ -10,6 +10,7 @@ import com.baoxiao.common.enums.BusinessType;
 import com.baoxiao.common.helper.LoginHelper;
 import com.baoxiao.common.utils.StringUtils;
 import com.baoxiao.common.utils.file.MimeTypeUtils;
+import com.baoxiao.system.domain.bo.BatchUpdateOssBo;
 import com.baoxiao.system.domain.vo.SysOssVo;
 import com.baoxiao.system.service.ISysOssService;
 import com.baoxiao.system.service.ISysUserService;
@@ -105,14 +106,31 @@ public class SysProfileController extends BaseController {
      */
     @Log(title = "用户头像", businessType = BusinessType.UPDATE)
     @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public R<Map<String, Object>> avatar(@RequestPart("avatarfile") MultipartFile avatarfile) {
-        Map<String, Object> ajax = new HashMap<>();
+    public R<Map<String, Object>> avatar(@RequestPart("avatarfile") MultipartFile avatarfile, BatchUpdateOssBo sysOssBo) {
         if (!avatarfile.isEmpty()) {
-            String extension = FileUtil.extName(avatarfile.getOriginalFilename());
-            if (!StringUtils.equalsAnyIgnoreCase(extension, MimeTypeUtils.IMAGE_EXTENSION)) {
+            Map<String, Object> ajax = new HashMap<>();
+
+             if (!StringUtils.equalsAnyIgnoreCase(FileUtil.extName(avatarfile.getOriginalFilename()), MimeTypeUtils.IMAGE_EXTENSION)) {
                 return R.fail("文件格式不正确，请上传" + Arrays.toString(MimeTypeUtils.IMAGE_EXTENSION) + "格式");
             }
-            SysOssVo oss = iSysOssService.upload(avatarfile);
+
+             /*如果图片存在直接更改头像*/
+            String fileName = iSysOssService.hasOssFileName(avatarfile.getOriginalFilename());
+            if (StringUtils.isNotEmpty(fileName)) {
+                userService.updateUserAvatar(getUsername(), fileName);
+                ajax.put("imgUrl", fileName);
+                return R.ok(ajax);
+            }
+
+            if (sysOssBo.getGroupType() == null) {
+                sysOssBo.setGroupType(1L);
+            }
+
+            if (sysOssBo.getGroupId() == null) {
+                sysOssBo.setGroupId(0L);
+            }
+
+            SysOssVo oss = iSysOssService.upload(avatarfile, sysOssBo);
             String avatar = oss.getUrl();
             if (userService.updateUserAvatar(getUsername(), avatar)) {
                 ajax.put("imgUrl", avatar);

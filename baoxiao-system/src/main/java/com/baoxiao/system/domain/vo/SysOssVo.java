@@ -20,6 +20,16 @@ public class SysOssVo {
     private Long ossId;
 
     /**
+     * 分组id
+     */
+    private Long groupId;
+
+    /**
+     * 分组类型id
+     */
+    private Long groupType;
+
+    /**
      * 文件名
      */
     private String fileName;

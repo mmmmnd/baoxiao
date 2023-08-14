@@ -4,6 +4,8 @@
 
     <resultMap type="com.baoxiao.system.domain.SysOss" id="SysOssResult">
         <result property="ossId" column="oss_id"/>
+        <result property="groupId" column="group_id"/>
+        <result property="groupType" column="group_type"/>
         <result property="fileName" column="file_name"/>
         <result property="fileSuffix" column="file_suffix"/>
         <result property="url" column="url"/>
@@ -14,5 +16,9 @@
         <result property="service" column="service"/>
     </resultMap>
 
-
+    <select id="hasOssFileName" parameterType="String" resultType="String">
+        SELECT o.url
+        FROM sys_oss o
+        WHERE LOCATE(#{fileName},o.file_name) LIMIT 1;
+    </select>
 </mapper>

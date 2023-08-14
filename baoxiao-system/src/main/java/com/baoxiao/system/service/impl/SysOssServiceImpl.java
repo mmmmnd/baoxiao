@@ -7,8 +7,11 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baoxiao.system.domain.bo.SysOssBo;
+import com.baoxiao.system.domain.SysOssGroup;
+import com.baoxiao.system.domain.bo.BatchUpdateOssBo;
+import com.baoxiao.system.domain.dto.BatchUpdateOssDto;
 import com.baoxiao.system.domain.vo.SysOssVo;
+import com.baoxiao.system.mapper.SysOssGroupMapper;
 import com.baoxiao.system.mapper.SysOssMapper;
 import com.baoxiao.system.service.ISysOssService;
 import com.baoxiao.common.constant.CacheNames;
@@ -31,7 +34,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -40,7 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
+/**buildOrderItem
  * 文件上传 服务层实现
  *
  * @author Lion Li
@@ -51,8 +53,10 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
 
     private final SysOssMapper baseMapper;
 
+    private final SysOssGroupMapper sysOssGroupMapper;
+
     @Override
-    public TableDataInfo<SysOssVo> queryPageList(SysOssBo bo, PageQuery pageQuery) {
+    public TableDataInfo<SysOssVo> queryPageList(BatchUpdateOssBo bo, PageQuery pageQuery) {
         LambdaQueryWrapper<SysOss> lqw = buildQueryWrapper(bo);
         Page<SysOssVo> result = baseMapper.selectVoPage(pageQuery.build(), lqw);
         List<SysOssVo> filterResult = result.getRecords().stream().map(this::matchingUrl).collect(Collectors.toList());
@@ -84,20 +88,6 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
         return String.join(StringUtils.SEPARATOR, list);
     }
 
-    private LambdaQueryWrapper<SysOss> buildQueryWrapper(SysOssBo bo) {
-        Map<String, Object> params = bo.getParams();
-        LambdaQueryWrapper<SysOss> lqw = Wrappers.lambdaQuery();
-        lqw.like(StringUtils.isNotBlank(bo.getFileName()), SysOss::getFileName, bo.getFileName());
-        lqw.like(StringUtils.isNotBlank(bo.getOriginalName()), SysOss::getOriginalName, bo.getOriginalName());
-        lqw.eq(StringUtils.isNotBlank(bo.getFileSuffix()), SysOss::getFileSuffix, bo.getFileSuffix());
-        lqw.eq(StringUtils.isNotBlank(bo.getUrl()), SysOss::getUrl, bo.getUrl());
-        lqw.between(params.get("beginCreateTime") != null && params.get("endCreateTime") != null,
-            SysOss::getCreateTime, params.get("beginCreateTime"), params.get("endCreateTime"));
-        lqw.eq(StringUtils.isNotBlank(bo.getCreateBy()), SysOss::getCreateBy, bo.getCreateBy());
-        lqw.eq(StringUtils.isNotBlank(bo.getService()), SysOss::getService, bo.getService());
-        return lqw;
-    }
-
     @Cacheable(cacheNames = CacheNames.SYS_OSS, key = "#ossId")
     @Override
     public SysOssVo getById(Long ossId) {
@@ -123,7 +113,7 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
     }
 
     @Override
-    public SysOssVo upload(MultipartFile file) {
+    public SysOssVo upload(MultipartFile file, BatchUpdateOssBo sysOssBo) {
         String originalfileName = file.getOriginalFilename();
         String suffix = StringUtils.substring(originalfileName, originalfileName.lastIndexOf("."), originalfileName.length());
         OssClient storage = OssFactory.instance();
@@ -134,17 +124,7 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
             throw new ServiceException(e.getMessage());
         }
         // 保存文件信息
-        return buildResultEntity(originalfileName, suffix, storage.getConfigKey(), uploadResult);
-    }
-
-    @Override
-    public SysOssVo upload(File file) {
-        String originalfileName = file.getName();
-        String suffix = StringUtils.substring(originalfileName, originalfileName.lastIndexOf("."), originalfileName.length());
-        OssClient storage = OssFactory.instance();
-        UploadResult uploadResult = storage.uploadSuffix(file, suffix);
-        // 保存文件信息
-        return buildResultEntity(originalfileName, suffix, storage.getConfigKey(), uploadResult);
+        return buildResultEntity(originalfileName, suffix, storage.getConfigKey(), uploadResult, sysOssBo);
     }
 
     private SysOssVo buildResultEntity(String originalfileName, String suffix, String configKey, UploadResult uploadResult) {
@@ -159,10 +139,28 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
         return this.matchingUrl(sysOssVo);
     }
 
+    private SysOssVo buildResultEntity(String originalfileName, String suffix, String configKey, UploadResult uploadResult, BatchUpdateOssBo sysOssBo) {
+        SysOss oss = new SysOss();
+        oss.setUrl(uploadResult.getUrl());
+        oss.setUrl(uploadResult.getUrl());
+        oss.setFileSuffix(suffix);
+        oss.setFileName(uploadResult.getFilename());
+        oss.setOriginalName(originalfileName);
+        oss.setService(configKey);
+        oss.setGroupId(sysOssBo.getGroupId());
+        oss.setGroupType(sysOssBo.getGroupType());
+        baseMapper.insert(oss);
+        SysOssVo sysOssVo = BeanUtil.toBean(oss, SysOssVo.class);
+        return this.matchingUrl(sysOssVo);
+    }
+
     @Override
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
         if (isValid) {
             // 做一些业务上的校验,判断是否需要校验
+            if (batchQueryByIds(ids).isEmpty()) {
+                throw new ServiceException("分组ids不存在");
+            }
         }
         List<SysOss> list = baseMapper.selectBatchIds(ids);
         for (SysOss sysOss : list) {
@@ -170,6 +168,61 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
             storage.delete(sysOss.getUrl());
         }
         return baseMapper.deleteBatchIds(ids) > 0;
+    }
+
+    private List<SysOss> batchQueryByIds(Collection<Long> ids){
+        return baseMapper.selectBatchIds(ids);
+    }
+    /**
+     * 通过分组id查询所有oss
+     *
+     * @param groupId 分组id
+     * @return 结果
+     */
+    @Override
+    public Long ListByGroupId(Long groupId) {
+        LambdaQueryWrapper<SysOss> lqw = Wrappers.lambdaQuery();
+        lqw.eq(SysOss::getGroupId, groupId);
+
+        return baseMapper.selectCount(lqw);
+    }
+
+    /**
+     * 批量修改oss分组名
+     *
+     * @param batchUpdateOssDto 实体
+     * @return 结果
+     */
+    @Override
+    public Integer batchUpdateByGroupId(BatchUpdateOssDto batchUpdateOssDto) {
+        SysOssGroup sysOssGroup = sysOssGroupMapper.selectById(batchUpdateOssDto.getGroupId());
+
+        if (ObjectUtil.isNull(sysOssGroup)){
+            throw new ServiceException("分组不存在！");
+        }
+
+        List<Long> ossIds = batchUpdateOssDto.getOssIds();
+        SysOss sysOss = BeanUtil.toBean(batchUpdateOssDto, SysOss.class);
+
+        return batchUpdate(sysOss, ossIds);
+    }
+
+    /**
+     * 查找文件名是否存在
+     *
+     * @param fileName 文件名
+     * @return 结果
+     */
+    @Override
+    public String hasOssFileName(String fileName) {
+        return baseMapper.hasOssFileName(fileName);
+    }
+
+    /**
+     * 批量修改
+     */
+    private Integer batchUpdate(SysOss sysOss,Collection<Long> ids){
+        return baseMapper.update(sysOss,Wrappers.<SysOss>lambdaQuery().in(SysOss::getOssId, ids));
     }
 
     /**
@@ -185,5 +238,33 @@ public class SysOssServiceImpl implements ISysOssService, OssService {
             oss.setUrl(storage.getPrivateUrl(oss.getFileName(), 120));
         }
         return oss;
+    }
+
+    private LambdaQueryWrapper<SysOss> buildQueryWrapper(BatchUpdateOssBo bo) {
+        Map<String, Object> params = bo.getParams();
+        LambdaQueryWrapper<SysOss> lqw = Wrappers.lambdaQuery();
+        lqw.like(StringUtils.isNotBlank(bo.getFileName()), SysOss::getFileName, bo.getFileName());
+        lqw.like(StringUtils.isNotBlank(bo.getOriginalName()), SysOss::getOriginalName, bo.getOriginalName());
+        lqw.eq(StringUtils.isNotBlank(bo.getFileSuffix()), SysOss::getFileSuffix, bo.getFileSuffix());
+        lqw.eq(StringUtils.isNotBlank(bo.getUrl()), SysOss::getUrl, bo.getUrl());
+        lqw.between(params.get("beginCreateTime") != null && params.get("endCreateTime") != null, SysOss::getCreateTime, params.get("beginCreateTime"), params.get("endCreateTime"));
+        lqw.eq(StringUtils.isNotBlank(bo.getCreateBy()), SysOss::getCreateBy, bo.getCreateBy());
+        lqw.eq(StringUtils.isNotBlank(bo.getService()), SysOss::getService, bo.getService());
+        lqw.eq(StringUtils.isNotBlank(bo.getService()), SysOss::getService, bo.getService());
+        lqw.eq(bo.getGroupType() != null, SysOss::getGroupType, bo.getGroupType());
+
+        if(bo.getGroupId() != null) {
+            if(bo.getGroupId() == 4L){
+                lqw.eq(SysOss::getGroupType, 1);
+            } else if(bo.getGroupId() == 5L){
+                lqw.eq(SysOss::getGroupType, 2);
+            }else if(bo.getGroupId() == 6L){
+                lqw.eq(SysOss::getGroupType, 3);
+            }else{
+                lqw.eq(SysOss::getGroupId, bo.getGroupId());
+            }
+        }
+
+        return lqw;
     }
 }

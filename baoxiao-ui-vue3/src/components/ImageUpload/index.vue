@@ -13,11 +13,14 @@
       :before-remove="handleDelete"
       :show-file-list="true"
       :headers="headers"
+      :data="datas"
       :file-list="fileList"
       :on-preview="handlePictureCardPreview"
       :class="{ hide: fileList.length >= limit }"
     >
-      <el-icon class="avatar-uploader-icon"><plus /></el-icon>
+      <el-icon class="avatar-uploader-icon">
+        <plus />
+      </el-icon>
     </el-upload>
     <!-- 上传提示 -->
     <div class="el-upload__tip" v-if="showTip">
@@ -69,7 +72,17 @@ const props = defineProps({
   // 是否显示提示
   isShowTip: {
     type: Boolean,
-    default: true
+    default: true,
+  },
+  // 分组类型id
+  groupType: {
+    type: [Number, String],
+    default: 0,
+  },
+  // 分组id
+  groupId: {
+    type: [Number, String],
+    default: 0,
   },
 });
 
@@ -82,38 +95,46 @@ const dialogVisible = ref(false);
 const baseUrl = import.meta.env.VITE_APP_BASE_API;
 const uploadImgUrl = ref(baseUrl + "/system/oss/upload"); // 上传的图片服务器地址
 const headers = ref({ Authorization: "Bearer " + getToken() });
+const datas = {
+  groupType: props.groupType,
+  groupId: props.groupId,
+};
 const fileList = ref([]);
 const showTip = computed(
   () => props.isShowTip && (props.fileType || props.fileSize)
 );
 
-watch(() => props.modelValue, async val => {
-  if (val) {
-    // 首先将值转为数组
-    let list;
-    if (Array.isArray(val)) {
-      list = val;
-    } else {
-      await listByIds(val).then(res => {
-        list = res.data;
-      })
-    }
-    // 然后将数组转为对象数组
-    fileList.value = list.map(item => {
-      // 字符串回显处理 如果此处存的是url可直接回显 如果存的是id需要调用接口查出来
-      if (typeof item === "string") {
-        item = { name: item, url: item };
+watch(
+  () => props.modelValue,
+  async (val) => {
+    if (val) {
+      // 首先将值转为数组
+      let list;
+      if (Array.isArray(val)) {
+        list = val;
       } else {
-        // 此处name使用ossId 防止删除出现重名
-        item = { name: item.ossId, url: item.url, ossId: item.ossId };
+        await listByIds(val).then((res) => {
+          list = res.data;
+        });
       }
-      return item;
-    });
-  } else {
-    fileList.value = [];
-    return [];
-  }
-},{ deep: true, immediate: true });
+      // 然后将数组转为对象数组
+      fileList.value = list.map((item) => {
+        // 字符串回显处理 如果此处存的是url可直接回显 如果存的是id需要调用接口查出来
+        if (typeof item === "string") {
+          item = { name: item, url: item };
+        } else {
+          // 此处name使用ossId 防止删除出现重名
+          item = { name: item.ossId, url: item.url, ossId: item.ossId };
+        }
+        return item;
+      });
+    } else {
+      fileList.value = [];
+      return [];
+    }
+  },
+  { deep: true, immediate: true }
+);
 
 // 上传前loading加载
 function handleBeforeUpload(file) {
@@ -156,7 +177,11 @@ function handleExceed() {
 // 上传成功回调
 function handleUploadSuccess(res, file) {
   if (res.code === 200) {
-    uploadList.value.push({ name: res.data.fileName, url: res.data.url, ossId: res.data.ossId });
+    uploadList.value.push({
+      name: res.data.fileName,
+      url: res.data.url,
+      ossId: res.data.ossId,
+    });
     uploadedSuccessfully();
   } else {
     number.value--;
@@ -169,7 +194,7 @@ function handleUploadSuccess(res, file) {
 
 // 删除图片
 function handleDelete(file) {
-  const findex = fileList.value.map(f => f.name).indexOf(file.name);
+  const findex = fileList.value.map((f) => f.name).indexOf(file.name);
   if (findex > -1 && uploadList.value.length === number.value) {
     let ossId = fileList.value[findex].ossId;
     delOss(ossId);
@@ -182,7 +207,9 @@ function handleDelete(file) {
 // 上传结束处理
 function uploadedSuccessfully() {
   if (number.value > 0 && uploadList.value.length === number.value) {
-    fileList.value = fileList.value.filter(f => f.url !== undefined).concat(uploadList.value);
+    fileList.value = fileList.value
+      .filter((f) => f.url !== undefined)
+      .concat(uploadList.value);
     uploadList.value = [];
     number.value = 0;
     emit("update:modelValue", listToString(fileList.value));
@@ -207,7 +234,7 @@ function listToString(list, separator) {
   let strs = "";
   separator = separator || ",";
   for (let i in list) {
-    if(undefined !== list[i].ossId && list[i].url.indexOf("blob:") !== 0) {
+    if (undefined !== list[i].ossId && list[i].url.indexOf("blob:") !== 0) {
       strs += list[i].ossId + separator;
     }
   }
@@ -218,6 +245,6 @@ function listToString(list, separator) {
 <style scoped lang="scss">
 // .el-upload--picture-card 控制加号部分
 :deep(.hide .el-upload--picture-card) {
-    display: none;
+  display: none;
 }
 </style>

@@ -1,3 +1,12 @@
+/*
+ * @Author: mmmmnd
+ * @eMail: handsome.mo@foxmail.com
+ * @Descripttion: 描述
+ * @version: 1.0.0
+ * @Date: 2023-07-20 11:13:51
+ * @LastEditors: mmmmnd
+ * @LastEditTime: 2023-08-11 10:40:57
+ */
 import { login, logout, getInfo } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import defAva from '@/assets/images/profile.jpg'
@@ -14,7 +23,7 @@ const useUserStore = defineStore(
     }),
     actions: {
       // 登录
-      login(userInfo) {
+      login (userInfo) {
         const username = userInfo.username.trim()
         const password = userInfo.password
         const code = userInfo.code
@@ -30,10 +39,11 @@ const useUserStore = defineStore(
         })
       },
       // 获取用户信息
-      getInfo() {
+      getInfo () {
         return new Promise((resolve, reject) => {
           getInfo().then(res => {
             const user = res.data.user
+            console.log(user);
             const avatar = (user.avatar == "" || user.avatar == null) ? defAva : user.avatar;
 
             if (res.data.roles && res.data.roles.length > 0) { // 验证返回的roles是否是一个非空数组
@@ -51,7 +61,7 @@ const useUserStore = defineStore(
         })
       },
       // 退出系统
-      logOut() {
+      logOut () {
         return new Promise((resolve, reject) => {
           logout(this.token).then(() => {
             this.token = ''

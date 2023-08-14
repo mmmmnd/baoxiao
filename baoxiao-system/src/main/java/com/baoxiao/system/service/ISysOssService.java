@@ -2,12 +2,12 @@ package com.baoxiao.system.service;
 
 import com.baoxiao.common.core.domain.PageQuery;
 import com.baoxiao.common.core.page.TableDataInfo;
-import com.baoxiao.system.domain.bo.SysOssBo;
+import com.baoxiao.system.domain.bo.BatchUpdateOssBo;
+import com.baoxiao.system.domain.dto.BatchUpdateOssDto;
 import com.baoxiao.system.domain.vo.SysOssVo;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -19,18 +19,36 @@ import java.util.List;
  */
 public interface ISysOssService {
 
-    TableDataInfo<SysOssVo> queryPageList(SysOssBo sysOss, PageQuery pageQuery);
+    TableDataInfo<SysOssVo> queryPageList(BatchUpdateOssBo sysOss, PageQuery pageQuery);
 
     List<SysOssVo> listByIds(Collection<Long> ossIds);
 
     SysOssVo getById(Long ossId);
 
-    SysOssVo upload(MultipartFile file);
-
-    SysOssVo upload(File file);
+    SysOssVo upload(MultipartFile file, BatchUpdateOssBo sysOssBo);
 
     void download(Long ossId, HttpServletResponse response) throws IOException;
 
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
 
+    /**
+     *  通过分组id查询所有oss
+     * @param groupId 分组id
+     * @return 结果
+     */
+    Long ListByGroupId(Long groupId);
+
+    /**
+     *  批量修改oss分组id
+     * @param batchUpdateOssDto 实体
+     * @return 结果
+     */
+    Integer batchUpdateByGroupId(BatchUpdateOssDto batchUpdateOssDto);
+
+    /**
+     * 查找文件名是否存在
+     * @param fileName 文件名
+     * @return 结果
+     */
+    String hasOssFileName(String fileName);
 }

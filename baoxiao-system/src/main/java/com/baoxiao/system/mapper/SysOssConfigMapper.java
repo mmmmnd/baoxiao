@@ -14,3 +14,4 @@ import com.baoxiao.system.domain.SysOssConfig;
 public interface SysOssConfigMapper extends BaseMapperPlus<SysOssConfigMapper, SysOssConfig, SysOssConfigVo> {
 
 }
+

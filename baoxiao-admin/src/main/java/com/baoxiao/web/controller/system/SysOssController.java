@@ -2,6 +2,7 @@ package com.baoxiao.web.controller.system;
 
 
 import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baoxiao.common.annotation.Log;
 import com.baoxiao.common.core.controller.BaseController;
@@ -10,7 +11,10 @@ import com.baoxiao.common.core.domain.R;
 import com.baoxiao.common.core.page.TableDataInfo;
 import com.baoxiao.common.core.validate.QueryGroup;
 import com.baoxiao.common.enums.BusinessType;
-import com.baoxiao.system.domain.bo.SysOssBo;
+import com.baoxiao.common.utils.StringUtils;
+import com.baoxiao.common.utils.file.MimeTypeUtils;
+import com.baoxiao.system.domain.bo.BatchUpdateOssBo;
+import com.baoxiao.system.domain.dto.BatchUpdateOssDto;
 import com.baoxiao.system.domain.vo.SysOssVo;
 import com.baoxiao.system.service.ISysOssService;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +49,7 @@ public class SysOssController extends BaseController {
      */
     @SaCheckPermission("system:oss:list")
     @GetMapping("/list")
-    public TableDataInfo<SysOssVo> list(@Validated(QueryGroup.class) SysOssBo bo, PageQuery pageQuery) {
+    public TableDataInfo<SysOssVo> list(@Validated(QueryGroup.class) BatchUpdateOssBo bo, PageQuery pageQuery) {
         return iSysOssService.queryPageList(bo, pageQuery);
     }
 
@@ -70,11 +74,29 @@ public class SysOssController extends BaseController {
     @SaCheckPermission("system:oss:upload")
     @Log(title = "OSS对象存储", businessType = BusinessType.INSERT)
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public R<Map<String, String>> upload(@RequestPart("file") MultipartFile file) {
+    public R<Map<String, String>> upload(@RequestPart("file") MultipartFile file, BatchUpdateOssBo sysOssBo) {
+        String extension = FileUtil.extName(file.getOriginalFilename());
+
         if (ObjectUtil.isNull(file)) {
             return R.fail("上传文件不能为空");
         }
-        SysOssVo oss = iSysOssService.upload(file);
+
+        /*图片*/
+        if (StringUtils.equalsAnyIgnoreCase(extension, MimeTypeUtils.IMAGE_EXTENSION)) {
+            sysOssBo.setGroupType(1L);
+        /*办公三件套*/
+        }else if(StringUtils.equalsAnyIgnoreCase(extension, MimeTypeUtils.OFFICE_EXTENSION)){
+            sysOssBo.setGroupType(2L);
+        /*其他*/
+        }else{
+            sysOssBo.setGroupType(3L);
+        }
+
+        if(sysOssBo.getGroupId() == null){
+            sysOssBo.setGroupId(0L);
+        }
+
+        SysOssVo oss = iSysOssService.upload(file, sysOssBo);
         Map<String, String> map = new HashMap<>(2);
         map.put("url", oss.getUrl());
         map.put("fileName", oss.getOriginalName());
@@ -106,4 +128,16 @@ public class SysOssController extends BaseController {
         return toAjax(iSysOssService.deleteWithValidByIds(Arrays.asList(ossIds), true));
     }
 
+    /**
+     * 修改OSS对象存储分组
+     *
+     * @param batchUpdateOssDto OSS对象ID串
+     * @return 结果
+     */
+    @SaCheckPermission("system:oss:update")
+    @Log(title = "OSS对象存储", businessType = BusinessType.UPDATE)
+    @PutMapping("/updateGroupId")
+    public R<Void> update(@RequestBody BatchUpdateOssDto batchUpdateOssDto){
+        return toAjax(iSysOssService.batchUpdateByGroupId(batchUpdateOssDto));
+    }
 }

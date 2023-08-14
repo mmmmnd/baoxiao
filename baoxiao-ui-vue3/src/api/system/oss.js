@@ -1,7 +1,7 @@
 import request from '@/utils/request'
 
 // 查询OSS对象存储列表
-export function listOss(query) {
+export function listOss (query) {
   return request({
     url: '/system/oss/list',
     method: 'get',
@@ -10,7 +10,7 @@ export function listOss(query) {
 }
 
 // 查询OSS对象基于id串
-export function listByIds(ossId) {
+export function listByIds (ossId) {
   return request({
     url: '/system/oss/listByIds/' + ossId,
     method: 'get'
@@ -18,10 +18,18 @@ export function listByIds(ossId) {
 }
 
 // 删除OSS对象存储
-export function delOss(ossId) {
+export function delOss (ossId) {
   return request({
     url: '/system/oss/' + ossId,
     method: 'delete'
   })
 }
 
+// 修改OSS对象存储分组
+export function ossGroupIdUpdate (data) {
+  return request({
+    url: '/system/oss/updateGroupId',
+    method: 'put',
+    data: data
+  })
+}
