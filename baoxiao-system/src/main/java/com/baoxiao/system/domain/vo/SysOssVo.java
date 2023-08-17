@@ -25,6 +25,16 @@ public class SysOssVo {
     private Long groupId;
 
     /**
+     * 用户id
+     */
+    private Long userId;
+
+    /**
+     * 部门ID
+     */
+    private Long deptId;
+
+    /**
      * 分组类型id
      */
     private Long groupType;
