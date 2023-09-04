@@ -8,11 +8,14 @@ import com.baoxiao.common.annotation.Log;
 import com.baoxiao.common.core.controller.BaseController;
 import com.baoxiao.common.core.domain.PageQuery;
 import com.baoxiao.common.core.domain.R;
+import com.baoxiao.common.core.domain.model.LoginUser;
 import com.baoxiao.common.core.page.TableDataInfo;
 import com.baoxiao.common.core.validate.QueryGroup;
 import com.baoxiao.common.enums.BusinessType;
+import com.baoxiao.common.helper.LoginHelper;
 import com.baoxiao.common.utils.StringUtils;
 import com.baoxiao.common.utils.file.MimeTypeUtils;
+import com.baoxiao.system.domain.SysOss;
 import com.baoxiao.system.domain.bo.BatchUpdateOssBo;
 import com.baoxiao.system.domain.dto.BatchUpdateOssDto;
 import com.baoxiao.system.domain.vo.SysOssVo;
@@ -44,7 +47,7 @@ public class SysOssController extends BaseController {
 
     private final ISysOssService iSysOssService;
 
-    /**
+    /** 点击导航和全部获取内容有问题r
      * 查询OSS对象存储列表
      */
     @SaCheckPermission("system:oss:list")
@@ -54,7 +57,7 @@ public class SysOssController extends BaseController {
     }
 
     /**
-     * 查询OSS对象基于id串
+     * 查询OSS对象基于id串8888
      *
      * @param ossIds OSS对象ID串
      */

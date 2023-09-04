@@ -18,30 +18,10 @@
         <result property="service" column="service"/>
     </resultMap>
 
-    <sql id="selectSql">
-        oss_id,
-        group_id,
-        user_id,
-        dept_id,
-        group_type,
-        file_name,
-        file_suffix,
-        url,
-        create_time,
-        create_by,
-        update_time,
-        update_by,
-        service
-    </sql>
-
     <select id="hasOssFileName" parameterType="String" resultType="String">
         SELECT o.url
         FROM sys_oss o
         WHERE LOCATE(#{fileName},o.file_name) LIMIT 1;
     </select>
 
-    <select id="selectVoPage" resultType="com.baoxiao.system.domain.vo.SysOssVo">
-        SELECT <include refid="selectSql"/>
-        FROM sys_oss
-    </select>
 </mapper>

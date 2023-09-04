@@ -137,6 +137,7 @@ public class SysProfileController extends BaseController {
                 return R.ok(ajax);
             }
         }
+
         return R.fail("上传图片异常，请联系管理员");
     }
 }

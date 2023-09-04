@@ -1,7 +1,9 @@
 package com.baoxiao.system.service;
 
 import com.baoxiao.common.core.domain.PageQuery;
+import com.baoxiao.common.core.domain.model.LoginUser;
 import com.baoxiao.common.core.page.TableDataInfo;
+import com.baoxiao.system.domain.SysOss;
 import com.baoxiao.system.domain.bo.BatchUpdateOssBo;
 import com.baoxiao.system.domain.dto.BatchUpdateOssDto;
 import com.baoxiao.system.domain.vo.SysOssVo;
@@ -29,7 +31,7 @@ public interface ISysOssService {
 
     void download(Long ossId, HttpServletResponse response) throws IOException;
 
-    Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
+    Integer deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
 
     /**
      *  通过分组id查询所有oss

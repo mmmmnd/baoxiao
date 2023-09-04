@@ -116,6 +116,8 @@
               class="el-icon-plus"
               size="small"
               @click="handleOssGroupAddOrEdit(treeNodeGroupItem)"
+              system:oss:change
+              v-hasPermi="['system:oss:addGroup']"
             >
               添加分组
             </el-button>
@@ -167,7 +169,7 @@
                   <el-button
                     :disabled="multiple"
                     @click="handleOssGroupOpen(treeNodeGroupItem)"
-                    v-hasPermi="['system:oss:change']"
+                    v-hasPermi="['system:oss:update']"
                     >更改分组</el-button
                   >
                 </el-col>
