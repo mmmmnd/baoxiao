@@ -331,6 +331,13 @@
                 <version>${baoxiao.version}</version>
             </dependency>
 
+            <!-- 报销模块 -->
+            <dependency>
+                <groupId>com.baoxiao</groupId>
+                <artifactId>baoxiao-app</artifactId>
+                <version>${baoxiao.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
@@ -345,6 +352,7 @@
         <module>baoxiao-extend</module>
         <module>baoxiao-oss</module>
         <module>baoxiao-sms</module>
+        <module>baoxiao-app</module>
     </modules>
     <packaging>pom</packaging>
 
