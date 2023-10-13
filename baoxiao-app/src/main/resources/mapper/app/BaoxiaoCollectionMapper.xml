@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.baoxiao.app.mapper.BaoxiaoCollectionMapper">
+
+    <resultMap type="com.baoxiao.app.domain.BaoxiaoCollection" id="BaoxiaoCollectionResult">
+        <result property="collectionId" column="collection_id"/>
+        <result property="collectionSum" column="collection_sum"/>
+        <result property="collectionUser" column="collection_user"/>
+        <result property="collectionBank" column="collection_bank"/>
+        <result property="collectionBankName" column="collection_bank_name"/>
+        <result property="collectionBankAddress" column="collection_bank_address"/>
+    </resultMap>
+
+
+</mapper>

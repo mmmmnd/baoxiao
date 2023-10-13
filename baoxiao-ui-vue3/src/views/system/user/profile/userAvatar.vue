@@ -34,8 +34,7 @@
       <el-row>
         <el-col :lg="{ span: 1, offset: 1 }" :md="3">
           <Material
-            v-model:value="options.imgs"
-            materialType="0"
+            v-model:materialValue="options.imgs"
             :materialNum="1"
             materialName="选择"
             :width="1200"
@@ -91,8 +90,8 @@ const options = reactive({
 watch(
   () => options.imgs,
   (newValue, oldValue) => {
-    options.img = newValue.join(",");
-    options.filename = getImg(options.img);
+    options.img = newValue[0].url;
+    options.filename = getImg(newValue[0].fileName);
   },
   { deep: true }
 );
@@ -148,9 +147,6 @@ function uploadImg() {
     let formData = new FormData();
     formData.append("avatarfile", data, options.filename);
 
-    console.log(data);
-    console.log(options.filename);
-    console.log(options.filename);
     uploadAvatar(formData).then((response) => {
       open.value = false;
       options.img = response.data.imgUrl;

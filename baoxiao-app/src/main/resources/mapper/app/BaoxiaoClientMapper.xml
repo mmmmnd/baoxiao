@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.baoxiao.app.mapper.BaoxiaoClientMapper">
+
+    <resultMap type="com.baoxiao.app.domain.BaoxiaoClient" id="BaoxiaoClientResult">
+        <result property="clientId" column="client_id"/>
+        <result property="clientUnitName" column="client_unit_name"/>
+        <result property="clientAgreementName" column="client_agreement_name"/>
+        <result property="businessType" column="business_type"/>
+        <result property="customerName" column="customer_name"/>
+        <result property="sellName" column="sell_name"/>
+        <result property="contactsName" column="contacts_name"/>
+        <result property="phone" column="phone"/>
+        <result property="status" column="status"/>
+        <result property="remark" column="remark"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+
+</mapper>

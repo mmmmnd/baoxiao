@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.baoxiao.app.mapper.BaoxiaoOrderMapper">
+
+    <resultMap type="com.baoxiao.app.domain.BaoxiaoOrder" id="BaoxiaoOrderResult">
+        <result property="orderId" column="order_id"/>
+        <result property="orderNumber" column="order_number"/>
+        <result property="orderType" column="order_type"/>
+        <result property="orderDate" column="order_date"/>
+        <result property="baoxiaoType" column="baoxiao_type"/>
+        <result property="baoxiaoSum" column="baoxiao_sum"/>
+        <result property="paymentSum" column="payment_sum"/>
+        <result property="offsetLoanSum" column="offset_loan_sum"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="collectionId" column="collection_id"/>
+        <result property="feeId" column="fee_id"/>
+        <result property="isOffsetLoan" column="is_offset_loan"/>
+        <result property="isDeptShare" column="is_dept_share"/>
+        <result property="orderStatus" column="order_status"/>
+        <result property="userId" column="user_id"/>
+        <result property="userName" column="user_name"/>
+        <result property="baoxiaoUserId" column="baoxiao_user_id"/>
+        <result property="baoxiaoUserName" column="baoxiao_user_name"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="deptName" column="dept_name"/>
+        <result property="companyId" column="company_id"/>
+        <result property="clientId" column="client_id"/>
+        <result property="remark" column="remark"/>
+        <result property="auditId" column="audit_id"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+
+</mapper>

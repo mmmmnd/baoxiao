@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baoxiao.common.core.domain.PageQuery;
+import com.baoxiao.common.core.domain.model.LoginUser;
 import com.baoxiao.common.core.page.TableDataInfo;
 import com.baoxiao.common.exception.ServiceException;
+import com.baoxiao.common.helper.LoginHelper;
 import com.baoxiao.common.utils.BeanCopyUtils;
 import com.baoxiao.common.utils.StringUtils;
 import com.baoxiao.system.domain.SysOssGroup;
@@ -75,12 +77,14 @@ public class SysOssGroupServiceImpl implements ISysOssGroupService {
      */
     @Override
     public Integer insertByBo(SysOssGroupBo bo) {
-        SysOssGroup sysOssGroup = new SysOssGroup();
-        BeanCopyUtils.copy(bo, sysOssGroup);
-
         if (hasName(bo.getName(), bo.getGroupType())) {
             throw new ServiceException("分组名已存在！");
         }
+
+        SysOssGroup sysOssGroup = new SysOssGroup();
+        BeanCopyUtils.copy(bo, sysOssGroup);
+        sysOssGroup = setSysOssGroupUserDept(sysOssGroup);
+
         return baseMapper.insert(sysOssGroup);
     }
 
@@ -92,13 +96,14 @@ public class SysOssGroupServiceImpl implements ISysOssGroupService {
      */
     @Override
     public Integer updateByBo(SysOssGroupBo bo) {
-
-        SysOssGroup sysOssGroup = new SysOssGroup();
-        BeanCopyUtils.copy(bo, sysOssGroup);
-
         if (hasName(bo.getName(), bo.getGroupType())) {
             throw new ServiceException("分组名已存在！");
         }
+
+        SysOssGroup sysOssGroup = new SysOssGroup();
+        BeanCopyUtils.copy(bo, sysOssGroup);
+        sysOssGroup = setSysOssGroupUserDept(sysOssGroup);
+
         return baseMapper.updateById(sysOssGroup);
     }
 
@@ -179,5 +184,18 @@ public class SysOssGroupServiceImpl implements ISysOssGroupService {
         }
 
         return listChildVo;
+    }
+
+    /**
+     * 设置用户id和群组id
+     * @param sysOssGroup
+     * @return
+     */
+    private SysOssGroup setSysOssGroupUserDept(SysOssGroup sysOssGroup){
+        LoginUser user = LoginHelper.getLoginUser();
+        sysOssGroup.setUserId(user.getUserId());
+        sysOssGroup.setDeptId(user.getDeptId());
+
+        return sysOssGroup;
     }
 }

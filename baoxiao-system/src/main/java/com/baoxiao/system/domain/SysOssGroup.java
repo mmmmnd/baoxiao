@@ -23,6 +23,16 @@ public class SysOssGroup extends BaseEntity {
     private Long groupType;
 
     /**
+     * 用户id
+     */
+    private Long userId;
+
+    /**
+     * 部门ID
+     */
+    private Long deptId;
+
+    /**
      * 分组名
      */
     private String name;

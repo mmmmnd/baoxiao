@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -455,6 +456,30 @@ public class RedisUtils {
     public static long decrAtomicValue(String key) {
         RAtomicLong atomic = CLIENT.getAtomicLong(key);
         return atomic.decrementAndGet();
+    }
+
+    /**
+     * 获取原子规定时间内的值
+     * @param key key
+     * @param duration 过期时间
+     * @param value 起始值
+     * @return
+     */
+    public static String getAtomicId(String key,Duration duration, String format, Integer value) {
+        RAtomicLong atomic = CLIENT.getAtomicLong(key);
+
+        if(atomic == null){
+            atomic = CLIENT.getAtomicLong(key);
+            atomic.set(value);
+        }
+
+        long incrementValue = atomic.incrementAndGet();
+
+        if(incrementValue == 1){
+            expire(key, duration);
+        }
+
+        return String.format(format, incrementValue);
     }
 
     /**

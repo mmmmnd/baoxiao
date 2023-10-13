@@ -58,9 +58,9 @@ public class DictAspect {
 
         if (result instanceof TableDataInfo) {
             dictResultPage = (TableDataInfo<Dict>) result;
-        }else if(result instanceof R) {
+        } else if(result instanceof R) {
             dictResult = (R<Dict>) result;
-        } else{
+        } else {
             return;
         }
 
@@ -78,13 +78,16 @@ public class DictAspect {
                 items.add(dict);
             }
             dictResultPage.setRows(items);
-        }else{
+        } else {
             Object data = dictResult.getData();
-            String json = JsonUtils.toJsonString(data);
-            Dict parseObject = JsonUtils.parseMap(json);
-            Dict dict = eachKeyValue(parseObject, data);
 
-            dictResult.setData(dict);
+            if(data != null) {
+                String json = JsonUtils.toJsonString(data);
+                Dict parseObject = JsonUtils.parseMap(json);
+                Dict dict = eachKeyValue(parseObject, data);
+
+                dictResult.setData(dict);
+            }
         }
     }
 

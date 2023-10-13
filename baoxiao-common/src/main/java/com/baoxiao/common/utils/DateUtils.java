@@ -7,11 +7,7 @@ import org.apache.commons.lang3.time.DateFormatUtils;
 import java.lang.management.ManagementFactory;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.util.Date;
 
 /**
@@ -47,6 +43,15 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
     }
 
     /**
+     * 获取当前LocalDateTime型日期
+     *
+     * @return LocalDateTime() 日期和时间
+     */
+    public static LocalDateTime getNowDateTime() {
+        return LocalDateTime.now();
+    }
+
+    /**
      * 获取当前日期, 默认格式为yyyy-MM-dd
      *
      * @return String
@@ -71,10 +76,17 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
         return parseDateToStr(YYYY_MM_DD, date);
     }
 
+
+    /**
+     *  Date ——> String 格式化日期
+     */
     public static String parseDateToStr(final String format, final Date date) {
         return new SimpleDateFormat(format).format(date);
     }
 
+    /**
+     * String ——> Date 解析日期
+     */
     public static Date dateTime(final String format, final String ts) {
         try {
             return new SimpleDateFormat(format).parse(ts);
@@ -150,7 +162,15 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
     }
 
     /**
-     * 增加 LocalDateTime ==> Date
+     * 获取当前时间戳
+     * @param flag true 秒 false 毫秒
+     * @return 结果
+     */
+    public static Long getTimestamp(Boolean flag) {
+        return flag ? System.currentTimeMillis() / 1000 : System.currentTimeMillis();
+    }
+    /**
+     *  LocalDateTime ==> Date
      */
     public static Date toDate(LocalDateTime temporalAccessor) {
         ZonedDateTime zdt = temporalAccessor.atZone(ZoneId.systemDefault());
@@ -158,11 +178,52 @@ public class DateUtils extends org.apache.commons.lang3.time.DateUtils {
     }
 
     /**
-     * 增加 LocalDate ==> Date
+     *  LocalDate ==> Date
      */
     public static Date toDate(LocalDate temporalAccessor) {
         LocalDateTime localDateTime = LocalDateTime.of(temporalAccessor, LocalTime.of(0, 0, 0));
         ZonedDateTime zdt = localDateTime.atZone(ZoneId.systemDefault());
         return Date.from(zdt.toInstant());
     }
+
+    /**
+     *  Date ==> LocalDateTime
+     */
+    public static LocalDateTime toLocalDateTime(Date date) {
+        return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+    }
+
+    /**
+     *  Date ==> LocalDate
+     */
+    public static LocalDate toLocalDate(Date date) {
+        return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()).toLocalDate();
+    }
+
+    /**
+     * LocalDateTime => 时间戳
+     * @param localDateTime LocalDateTime
+     * @param flag true 秒 false 毫秒
+     * @return 结果
+     */
+    public static Long toTimestamp(LocalDateTime localDateTime, Boolean flag) {
+        return flag
+            ? localDateTime.atZone(ZoneId.systemDefault()).toInstant().getEpochSecond()
+            : localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+    }
+
+    /**
+     * 时间戳 => LocalDateTime
+     * @param timestamp LocalDateTime
+     * @return  true 秒 false 毫秒
+     */
+    public static LocalDateTime timestampToDateTime(Long timestamp){
+        String timestampStr = String.valueOf(timestamp);
+
+        return timestampStr.matches("\\d{10}")
+            ? LocalDateTime.ofInstant(Instant.ofEpochSecond(timestamp), ZoneId.systemDefault())
+            : Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault()).toLocalDateTime();
+    }
+
+
 }

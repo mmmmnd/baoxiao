@@ -5,7 +5,7 @@
  * @version: 1.0.0
  * @Date: 2023-07-20 11:13:51
  * @LastEditors: mmmmnd
- * @LastEditTime: 2023-08-11 10:40:57
+ * @LastEditTime: 2023-10-07 15:08:20
  */
 import { login, logout, getInfo } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
@@ -17,7 +17,9 @@ const useUserStore = defineStore(
     state: () => ({
       token: getToken(),
       name: '',
+      userId: '',
       avatar: '',
+      nickName: '',
       roles: [],
       permissions: []
     }),
@@ -43,7 +45,6 @@ const useUserStore = defineStore(
         return new Promise((resolve, reject) => {
           getInfo().then(res => {
             const user = res.data.user
-            console.log(user);
             const avatar = (user.avatar == "" || user.avatar == null) ? defAva : user.avatar;
 
             if (res.data.roles && res.data.roles.length > 0) { // 验证返回的roles是否是一个非空数组
@@ -53,7 +54,9 @@ const useUserStore = defineStore(
               this.roles = ['ROLE_DEFAULT']
             }
             this.name = user.userName
+            this.userId = user.userId
             this.avatar = avatar;
+            this.nickName = user.nickName
             resolve(res)
           }).catch(error => {
             reject(error)

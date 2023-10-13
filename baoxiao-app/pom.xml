@@ -18,6 +18,10 @@
             <groupId>com.baoxiao</groupId>
             <artifactId>baoxiao-common</artifactId>
         </dependency>
+      <dependency>
+        <groupId>com.baoxiao</groupId>
+        <artifactId>baoxiao-system</artifactId>
+      </dependency>
     </dependencies>
 
     <properties>
