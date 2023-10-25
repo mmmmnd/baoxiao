@@ -205,6 +205,9 @@
         <el-form-item label="联系电话" prop="phone">
           <el-input v-model="form.phone" placeholder="请输入联系电话" />
         </el-form-item>
+        <el-form-item label="排序" prop="sort">
+          <el-input v-model="form.sort" placeholder="请输入排序" />
+        </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remark" placeholder="请输入备注" />
         </el-form-item>
@@ -259,6 +262,7 @@ const data = reactive({
     sellName: undefined,
     contactsName: undefined,
     phone: undefined,
+    sort: undefined,
     status: undefined,
   },
   rules: {
@@ -280,6 +284,9 @@ const data = reactive({
     ],
     contactsName: [
       { required: true, message: "联系人不能为空", trigger: "blur" },
+    ],
+    sort: [
+      { required: true, message: "排序不能为空", trigger: "blur" }
     ],
     phone: [{ required: true, message: "联系电话不能为空", trigger: "blur" }],
     status: [{ required: true, message: "状态不能为空", trigger: "change" }],
@@ -326,6 +333,7 @@ function reset() {
     contactsName: null,
     phone: null,
     status: null,
+    sort: null,
     remark: null,
     delFlag: null,
     createBy: null,

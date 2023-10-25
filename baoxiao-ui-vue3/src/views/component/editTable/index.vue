@@ -10,12 +10,12 @@
       <el-table
         ref="attrTableRef"
         @selection-change="handleSelectionChange"
-        :data="tableData"
+        :data="data"
         style="width: 100%"
       >
         <el-table-column type="selection" width="55" />
         <el-table-column
-          v-for="item in data.table"
+          v-for="item in list.table"
           :prop="item.prop"
           :label="item.label"
         >
@@ -40,66 +40,64 @@
 </template>
 
 <script setup>
-
 const { proxy } = getCurrentInstance();
 const props = defineProps({
-  data: {
+  list: {
     type: Object,
     default: {},
   },
+  data:{
+    type: Array,
+    default: [],
+  }
 });
 
-defineExpose({ save, clear });
+const emit = defineEmits(["update:data"]);
 
-const tableData = ref([]);
+defineExpose({ isSave });
+
 const selectedRow = ref([]);
-const changeHasSave = ref(true);
 
 /* 新增 */
 function addRow() {
-  const newTableData = JSON.parse(JSON.stringify(tableData.value));
+  const tableData = props.data;
+  tableData.push({
+    uuid:Math.random().toString(36).slice(-6)
+  })
 
-  newTableData.push({});
-  tableData.value = newTableData.map((e) => {
-    const uuid = Math.random().toString(36).slice(-6);
-
-    return { ...e, uuid };
-  });
-  changeHasSave.value = false;
+  emit("update:data", tableData);
 }
 
 /* 删除 */
 function deleteRow() {
+  const tableData = props.data;
   if (selectedRow.value.length <= 0) {
-    return proxy.$modal.msgWarning(`请选择需要删除${props.data.title}的属性`);
+    return proxy.$modal.msgWarning(`请选择需要删除${props.list.title}的属性`);
   }
 
   selectedRow.value.filter((row) => {
-    tableData.value.filter((table, tableIndex) => {
-      if (row.id == table.id) {
-        tableData.value.splice(tableIndex, 1);
+    const rowId = row.id || row.uuid;
+    tableData.filter((table, tableIndex) => {
+      const tableId = table.id || table.uuid;
+      if (rowId == tableId) {
+        tableData.splice(tableIndex, 1);
       }
     });
   });
 
-  if (tableData.value.length == 0) {
-    changeHasSave.value = true;
-  }
+  emit("update:data", tableData);
 }
 
 /* 保存 */
-async function save() {
-  if (changeHasSave.value) {
-    proxy.$modal.msgWarning(`没有需要保存${props.data.title}的数据`);
+async function isSave() {
+  const changeHasSave = props.data.length == 0;
+
+  if (changeHasSave) {
+    proxy.$modal.msgWarning(`没有需要保存${props.list.title}的数据`);
     return false;
   }
 
-  return (await tableValidate()) ? tableData.value : false;
-}
-
-/* 清空 */
-function clear() {
-  tableData.value = [];
+  return await tableValidate();
 }
 
 /* 获取当前选中 */

@@ -68,6 +68,12 @@ public class BaoxiaoClientBo extends BaseEntity {
     private String phone;
 
     /**
+     * 排序
+     */
+    @NotNull(message = "排序不能为空", groups = { AddGroup.class, EditGroup.class })
+    private Integer sort;
+
+    /**
      * 状态（0显示 1隐藏）
      */
     private Integer status;

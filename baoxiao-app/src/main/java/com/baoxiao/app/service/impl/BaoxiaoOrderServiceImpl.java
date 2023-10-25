@@ -8,6 +8,9 @@ import com.baoxiao.app.domain.BaoxiaoCollection;
 import com.baoxiao.app.domain.BaoxiaoFee;
 import com.baoxiao.app.domain.BaoxiaoOrderFile;
 import com.baoxiao.app.domain.dto.BaoxiaoOrderAddDto;
+import com.baoxiao.app.domain.dto.BaoxiaoOrderEditDto;
+import com.baoxiao.app.domain.vo.BaoxiaoOrderInfoVo;
+import com.baoxiao.common.constant.CacheNames;
 import com.baoxiao.common.core.domain.model.LoginUser;
 import com.baoxiao.common.core.page.TableDataInfo;
 import com.baoxiao.common.core.domain.PageQuery;
@@ -19,6 +22,8 @@ import com.baoxiao.common.utils.DateUtils;
 import com.baoxiao.common.utils.StringUtils;
 import com.baoxiao.common.utils.redis.RedisUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import com.baoxiao.app.domain.bo.BaoxiaoOrderBo;
 import com.baoxiao.app.domain.vo.BaoxiaoOrderVo;
@@ -31,7 +36,6 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * 订单Service业务层处理
@@ -55,8 +59,9 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
      * 查询订单
      */
     @Override
-    public BaoxiaoOrderVo queryById(Long orderId){
-        return baseMapper.selectVoById(orderId);
+    @Cacheable(cacheNames = baoxiaoConstants.BAOXIAO_ORDER_ORDER_ID, key = "#orderId", condition = "#orderId != null")
+    public BaoxiaoOrderInfoVo queryById(Long orderId){
+        return baseMapper.selectOrderInfoById(orderId);
     }
 
     /**
@@ -81,7 +86,7 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
     private LambdaQueryWrapper<BaoxiaoOrder> buildQueryWrapper(BaoxiaoOrderBo bo) {
         Map<String, Object> params = bo.getParams();
         LambdaQueryWrapper<BaoxiaoOrder> lqw = Wrappers.lambdaQuery();
-        lqw.eq(StringUtils.isNotBlank(bo.getOrderNumber()), BaoxiaoOrder::getOrderNumber, bo.getOrderNumber());
+        lqw.eq(bo.getOrderNumber() != null , BaoxiaoOrder::getOrderNumber, bo.getOrderNumber());
         lqw.eq(bo.getOrderType() != null, BaoxiaoOrder::getOrderType, bo.getOrderType());
         lqw.eq(bo.getOrderDate() != null, BaoxiaoOrder::getOrderDate, bo.getOrderDate());
         lqw.eq(bo.getBaoxiaoType() != null, BaoxiaoOrder::getBaoxiaoType, bo.getBaoxiaoType());
@@ -105,7 +110,6 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
     /**
      * 新增订单
      */
-
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean insertByBo(BaoxiaoOrderAddDto dto) {
@@ -139,13 +143,13 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
         String userId = userIdBore + userIdMiddle + userIdAfter;
 
         String atomicId = RedisUtils.getAtomicId(
-            baoxiaoConstants.BAOXIAO_ORDER_ORDER_ID,
+            baoxiaoConstants.BAOXIAO_ORDER_ORDER_QUANTITY,
             Duration.ofSeconds(baoxiaoConfigConstants.EXPIRATION_TIME),
             baoxiaoConfigConstants.FORMAT_02,
             baoxiaoConfigConstants.DEFAULT_ATOMIC_VALUE);
 
         /*时间戳 + 业务类型 + 递增的数值 + 类用户ID*/
-        String orderNumber = DateUtils.getTimestamp(true) + baoxiaoType + atomicId + userId;
+        Long orderNumber = Long.valueOf( DateUtils.getTimestamp(true) + baoxiaoType + atomicId + userId);
 
         order.setOrderNumber(orderNumber);
         order.setUserName(loginUser.getUsername());
@@ -165,16 +169,10 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
         boolean flag = baseMapper.insert(order) > 0;
 
         /**
-         *
          * 查找出所有前端传过来的fileId然后讲orderId批量插入
          * 文件中未存在orderId的将进行批量删除
          */
-        List<Long> fileIds = dto.getFileIds();
-        List<BaoxiaoOrderFile> files = baoxiaoOrderFileService.btachQueryByIds(fileIds);
-        files.forEach(file -> file.setOssId(order.getOrderId()));
-
-        baoxiaoOrderFileService.batchUpdateByIds(files);
-        baoxiaoOrderFileService.deleteWithValidByOrderId();
+        baoxiaoOrderFileService.batchUpdaeDeleteByOrderId(dto.getFileIds(),order.getOrderId());
 
         return flag;
     }
@@ -183,10 +181,40 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
      * 修改订单
      */
     @Override
-    public Boolean updateByBo(BaoxiaoOrderBo bo) {
-        BaoxiaoOrder update = BeanUtil.toBean(bo, BaoxiaoOrder.class);
-        validEntityBeforeSave(update);
-        return baseMapper.updateById(update) > 0;
+    @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = baoxiaoConstants.BAOXIAO_ORDER_ORDER_ID, key = "#orderId", condition = "#orderId != null")
+    public Boolean updateByBo(BaoxiaoOrderEditDto dto) {
+        BaoxiaoOrder order = BeanUtil.toBean(dto, BaoxiaoOrder.class);
+        BaoxiaoOrder baoxiaoOrder = baseMapper.selectById(order.getOrderId());
+
+        if(baoxiaoOrder.getDelFlag() == 2){
+            throw new RuntimeException("订单不存在！");
+        }
+        /*删除旧费用明细*/
+        List<Long> feeIds = Collections.singletonList(baoxiaoOrder.getFeeId());
+        baoxiaoFeeService.deleteWithValidByIds(feeIds, false);
+
+        /*删除收款人信息*/
+        List<Long> collectionIds = Collections.singletonList(baoxiaoOrder.getCollectionId());
+        baoxiaoCollectionService.deleteWithValidByIds(collectionIds, false);
+
+        /**
+         * 查找出所有前端传过来的fileId然后讲orderId批量插入
+         * 文件中未存在orderId的将进行批量删除
+         */
+        baoxiaoOrderFileService.batchUpdaeDeleteByOrderId(dto.getFileIds(),baoxiaoOrder.getOrderId());
+
+        /*批量添加费用明细*/
+        List<BaoxiaoFee> fees = dto.getFees();
+        fees.forEach(fee -> fee.setFeeId(baoxiaoOrder.getFeeId()));
+        baoxiaoFeeService.batchInsertByList(fees);
+
+        /*批量添加收款人信息*/
+        List<BaoxiaoCollection> collections = dto.getCollections();
+        collections.forEach(collection -> collection.setCollectionId(baoxiaoOrder.getCollectionId()));
+        baoxiaoCollectionService.batchInsertByList(collections);
+
+        return baseMapper.updateById(order) > 0;
     }
 
     /**

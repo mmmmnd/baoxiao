@@ -38,7 +38,7 @@ public class BaoxiaoOrderVo {
      * 订单编号
      */
     @ExcelProperty(value = "订单编号")
-    private String orderNumber;
+    private Long orderNumber;
 
     /**
      * 订单类型
@@ -99,12 +99,14 @@ public class BaoxiaoOrderVo {
     /**
      * 冲借款 (0 未冲 1已冲)
      */
+    @DictFormat(dictDataSource = "order_offset_loan")
     @ExcelProperty(value = "冲借款 (0 未冲 1已冲)")
     private Integer isOffsetLoan;
 
     /**
      * 部门分摊 (0末分 1已分)
      */
+    @DictFormat(dictDataSource = "order_dept_share")
     @ExcelProperty(value = "部门分摊 (0末分 1已分)")
     private Integer isDeptShare;
 

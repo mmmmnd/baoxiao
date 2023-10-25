@@ -68,4 +68,10 @@ public interface IBaoxiaoOrderFileService {
      * 批量删除不存在的订单文件
      */
     Boolean deleteWithValidByOrderId();
+
+    /**
+     * 查找出所有前端传过来的fileId然后讲orderId批量插入
+     * 文件中未存在orderId的将进行批量删除
+     */
+    void batchUpdaeDeleteByOrderId(List<Long> fileIds, Long orderId);
 }

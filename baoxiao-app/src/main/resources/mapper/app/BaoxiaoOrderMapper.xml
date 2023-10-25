@@ -29,11 +29,73 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="clientId" column="client_id"/>
         <result property="remark" column="remark"/>
         <result property="auditId" column="audit_id"/>
+        <result property="delFlag" column="del_flag"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
         <result property="updateBy" column="update_by"/>
         <result property="updateTime" column="update_time"/>
     </resultMap>
 
+    <resultMap type="com.baoxiao.app.domain.vo.BaoxiaoOrderInfoVo" id="BaoxiaoOrderInfoVoResult">
+        <result property="orderId" column="order_id"/>
+        <result property="orderNumber" column="order_number"/>
+        <result property="orderType" column="order_type"/>
+        <result property="orderDate" column="order_date"/>
+        <result property="baoxiaoType" column="baoxiao_type"/>
+        <result property="baoxiaoSum" column="baoxiao_sum"/>
+        <result property="paymentSum" column="payment_sum"/>
+        <result property="offsetLoanSum" column="offset_loan_sum"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="isOffsetLoan" column="is_offset_loan"/>
+        <result property="isDeptShare" column="is_dept_share"/>
+        <result property="orderStatus" column="order_status"/>
+        <result property="userId" column="user_id"/>
+        <result property="userName" column="user_name"/>
+        <result property="baoxiaoUserId" column="baoxiao_user_id"/>
+        <result property="baoxiaoUserName" column="baoxiao_user_name"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="deptName" column="dept_name"/>
+        <result property="companyId" column="company_id"/>
+        <result property="clientId" column="client_id"/>
+        <result property="remark" column="remark"/>
+        <result property="auditId" column="audit_id"/>
+        <collection property="fees" ofType="com.baoxiao.app.domain.BaoxiaoFee">
+            <result property="feeId" column="fee_id"/>
+            <result property="feeItem" column="fee_item"/>
+            <result property="baoxiaoSum" column="bsum"/>
+            <result property="taxRate" column="tax_rate"/>
+            <result property="specialRicket" column="special_ricket"/>
+        </collection>
+        <collection property="collections" ofType="com.baoxiao.app.domain.BaoxiaoCollection">
+            <result property="collectionId" column="collection_id"/>
+            <result property="collectionSum" column="collection_sum"/>
+            <result property="collectionUser" column="collection_user"/>
+            <result property="collectionBank" column="collection_bank"/>
+            <result property="collectionBankName" column="collection_bank_name"/>
+            <result property="collectionBankAddress" column="collection_bank_address"/>
+        </collection>
+        <collection property="files" ofType="com.baoxiao.app.domain.BaoxiaoOrderFile">
+            <result property="fileId" column="file_id"/>
+            <result property="orderId" column="oid"/>
+            <result property="ossId" column="oss_id"/>
+            <result property="fileName" column="file_name"/>
+            <result property="originalName" column="original_name"/>
+            <result property="url" column="url"/>
+        </collection>
+    </resultMap>
 
+    <select id="selectOrderInfoById"  resultMap="BaoxiaoOrderInfoVoResult">
+        select o.order_id,o.order_number,o.order_type,o.order_date,o.baoxiao_type,o.baoxiao_sum,o.payment_sum,o.offset_loan_sum,o.total_amount,o.is_offset_loan,o.is_dept_share,o.order_status,o.user_id,o.user_name,o.baoxiao_user_id,o.baoxiao_user_name,o.dept_id,o.dept_name,o.company_id,o.client_id,o.remark,o.audit_id,
+            f.fee_id,f.fee_item,f.baoxiao_sum as bsum,f.tax_rate,f.special_ricket,
+            c.collection_id,c.collection_sum,c.collection_user,c.collection_bank,c.collection_bank_name,c.collection_bank_address,
+            of.file_id,of.order_id as oid,of.oss_id,of.file_name,of.original_name,of.url
+        from baoxiao_order o
+        left join baoxiao_fee f on o.fee_id = f.fee_id
+        left join baoxiao_collection c on o.collection_id = c.collection_id
+        left join baoxiao_order_file of on o.order_id = of.order_id
+        where o.del_flag = 0
+        <if test="orderId != '' and orderId != null">
+            and o.order_id = #{orderId}
+        </if>
+    </select>
 </mapper>

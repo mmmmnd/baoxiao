@@ -75,6 +75,9 @@ public class BaoxiaoCompanyServiceImpl implements IBaoxiaoCompanyService {
      */
     @Override
     public Boolean insertByBo(BaoxiaoCompanyBo bo) {
+        if(bo.getRemark() == null){
+            bo.setRemark("");
+        }
         BaoxiaoCompany add = BeanUtil.toBean(bo, BaoxiaoCompany.class);
         validEntityBeforeSave(add);
         boolean flag = baseMapper.insert(add) > 0;

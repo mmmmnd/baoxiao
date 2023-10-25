@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Arrays;
 
 import com.baoxiao.app.domain.dto.BaoxiaoOrderAddDto;
+import com.baoxiao.app.domain.dto.BaoxiaoOrderEditDto;
+import com.baoxiao.app.domain.vo.BaoxiaoOrderInfoVo;
 import lombok.RequiredArgsConstructor;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.*;
@@ -65,7 +67,7 @@ public class BaoxiaoOrderController extends BaseController {
      */
     @SaCheckPermission("app:order:query")
     @GetMapping("/{orderId}")
-    public R<BaoxiaoOrderVo> getInfo(@NotNull(message = "主键不能为空")
+    public R<BaoxiaoOrderInfoVo> getInfo(@NotNull(message = "主键不能为空")
                                      @PathVariable Long orderId) {
         return R.ok(iBaoxiaoOrderService.queryById(orderId));
     }
@@ -89,8 +91,8 @@ public class BaoxiaoOrderController extends BaseController {
     @Log(title = "订单", businessType = BusinessType.UPDATE)
     @RepeatSubmit()
     @PutMapping()
-    public R<Void> edit(@Validated(EditGroup.class) @RequestBody BaoxiaoOrderBo bo) {
-        return toAjax(iBaoxiaoOrderService.updateByBo(bo));
+    public R<Void> edit(@Validated(EditGroup.class) @RequestBody BaoxiaoOrderEditDto dto) {
+        return toAjax(iBaoxiaoOrderService.updateByBo(dto));
     }
 
     /**

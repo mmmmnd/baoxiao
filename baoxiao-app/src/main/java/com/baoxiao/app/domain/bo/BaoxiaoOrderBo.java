@@ -9,7 +9,6 @@ import javax.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import com.fasterxml.jackson.annotation.JsonFormat;
 
 /**
  * 订单业务对象 baoxiao_order
@@ -32,7 +31,7 @@ public class BaoxiaoOrderBo extends BaseEntity {
      * 订单编号
      */
     @NotBlank(message = "订单编号不能为空", groups = { AddGroup.class, EditGroup.class })
-    private String orderNumber;
+    private Long orderNumber;
 
     /**
      * 订单类型

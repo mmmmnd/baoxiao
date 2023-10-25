@@ -77,6 +77,9 @@ public class BaoxiaoClientServiceImpl implements IBaoxiaoClientService {
      */
     @Override
     public Boolean insertByBo(BaoxiaoClientBo bo) {
+        if(bo.getRemark() == null){
+            bo.setRemark("");
+        }
         BaoxiaoClient add = BeanUtil.toBean(bo, BaoxiaoClient.class);
         validEntityBeforeSave(add);
         boolean flag = baseMapper.insert(add) > 0;

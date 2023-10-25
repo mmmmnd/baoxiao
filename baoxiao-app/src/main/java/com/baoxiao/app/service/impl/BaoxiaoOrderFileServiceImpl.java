@@ -134,6 +134,7 @@ public class BaoxiaoOrderFileServiceImpl implements IBaoxiaoOrderFileService {
      * 批量删除订单文件
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
         if(isValid){
             //TODO 做一些业务上的校验,判断是否需要校验
@@ -168,6 +169,20 @@ public class BaoxiaoOrderFileServiceImpl implements IBaoxiaoOrderFileService {
         List<BaoxiaoOrderFile> files = baseMapper.selectList(lqw);
         List<Long> fileIds = files.stream().map(BaoxiaoOrderFile::getFileId).collect(Collectors.toList());
 
-        return files.size()>0? deleteWithValidByIds(fileIds,false):false;
+        return !files.isEmpty() && deleteWithValidByIds(fileIds,false);
+    }
+
+    /**
+     * 查找出所有前端传过来的fileId然后讲orderId批量插入
+     * 文件中未存在orderId的将进行批量删除
+     */
+    @Override
+    public void batchUpdaeDeleteByOrderId(List<Long> fileIds,Long orderId) {
+        if (!fileIds.isEmpty()) {
+            List<BaoxiaoOrderFile> files = btachQueryByIds(fileIds);
+            files.forEach(file -> file.setOrderId(orderId));
+            batchUpdateByIds(files);
+        }
+        deleteWithValidByOrderId();
     }
 }

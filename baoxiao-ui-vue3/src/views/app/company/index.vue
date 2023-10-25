@@ -96,7 +96,7 @@
         <el-form-item label="公司地址" prop="companyAddress">
           <el-input v-model="form.companyAddress" placeholder="请输入公司地址" />
         </el-form-item>
-        <el-form-item label="公司联系人" prop="companyContact">
+        <el-form-item label="联系人" prop="companyContact">
           <el-input v-model="form.companyContact" placeholder="请输入公司联系人" />
         </el-form-item>
         <el-form-item label="联系电话" prop="phone">

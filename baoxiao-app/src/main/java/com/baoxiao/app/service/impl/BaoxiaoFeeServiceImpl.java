@@ -100,6 +100,7 @@ public class BaoxiaoFeeServiceImpl implements IBaoxiaoFeeService {
      * 批量删除费用明细
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid) {
         if(isValid){
             //TODO 做一些业务上的校验,判断是否需要校验

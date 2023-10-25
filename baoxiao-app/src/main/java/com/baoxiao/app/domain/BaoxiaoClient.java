@@ -1,5 +1,6 @@
 package com.baoxiao.app.domain;
 
+import com.alibaba.excel.annotation.ExcelProperty;
 import com.baomidou.mybatisplus.annotation.*;
 import com.baoxiao.common.core.domain.BaseEntity;
 import lombok.Data;
@@ -56,6 +57,10 @@ public class BaoxiaoClient extends BaseEntity {
      * 状态（0显示 1隐藏）
      */
     private Integer status;
+    /**
+     * 排序
+     */
+    private Integer sort;
     /**
      * 备注
      */

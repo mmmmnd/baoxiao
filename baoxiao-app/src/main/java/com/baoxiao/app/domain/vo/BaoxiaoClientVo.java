@@ -68,6 +68,12 @@ public class BaoxiaoClientVo {
     private String phone;
 
     /**
+     * 排序
+     */
+    @ExcelProperty(value = "排序")
+    private Integer sort;
+
+    /**
      * 状态（0显示 1隐藏）
      */
     @ExcelProperty(value = "状态", converter = ExcelDictConvert.class)

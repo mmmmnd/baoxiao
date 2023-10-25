@@ -1,8 +1,10 @@
 package com.baoxiao.app.mapper;
 
 import com.baoxiao.app.domain.BaoxiaoOrder;
+import com.baoxiao.app.domain.vo.BaoxiaoOrderInfoVo;
 import com.baoxiao.app.domain.vo.BaoxiaoOrderVo;
 import com.baoxiao.common.core.mapper.BaseMapperPlus;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * 订单Mapper接口
@@ -12,4 +14,5 @@ import com.baoxiao.common.core.mapper.BaseMapperPlus;
  */
 public interface BaoxiaoOrderMapper extends BaseMapperPlus<BaoxiaoOrderMapper, BaoxiaoOrder, BaoxiaoOrderVo> {
 
+    BaoxiaoOrderInfoVo selectOrderInfoById(@Param("orderId") Long orderId);
 }

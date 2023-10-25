@@ -5,6 +5,8 @@ import com.baoxiao.common.core.domain.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.math.BigDecimal;
+
 
 /**
  * 费用明细对象 baoxiao_fee
@@ -31,20 +33,14 @@ public class BaoxiaoFee {
     /**
      * 报销金额
      */
-    private String baoxiaoSum;
+    private BigDecimal baoxiaoSum;
     /**
      * 税率%
      */
-    private String taxRate;
+    private BigDecimal taxRate;
     /**
      * 进项税额（专票）
      */
-    private String specialRicket;
-
-
-
-
-
-
+    private BigDecimal specialRicket;
 
 }

@@ -40,18 +40,14 @@
   </el-table>
 </template>
 <script setup>
-import { addOrderFile, listOrderFile, delOrderFile } from "@/api/app/order";
+import { addOrderFile, delOrderFile } from "@/api/app/order";
 import Material from "@/components/Material";
 const { proxy } = getCurrentInstance();
 const props = defineProps({
   data: {
-    type: Object,
+    type: Array,
     default: [],
-  },
-  orderId: {
-    type: Number,
-    default: -1,
-  },
+  }
 });
 
 const emit = defineEmits(["update:data"]);
@@ -105,13 +101,4 @@ const handAdd = (files) => {
     emit("update:data", props.data);
   });
 };
-
-/* 获取文件 */
-const getData = () => {
-  listOrderFile({ orderId: props.orderId }).then((res) => {
-    emit("update:data", res.rows);
-  });
-};
-
-props.orderId && getData();
 </script>

@@ -6,6 +6,7 @@ import com.baoxiao.common.core.validate.EditGroup;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import javax.validation.constraints.*;
+import java.math.BigDecimal;
 
 
 /**
@@ -46,15 +47,15 @@ public class BaoxiaoFeeBo extends BaseEntity {
      * 报销金额
      */
     @NotBlank(message = "报销金额不能为空", groups = { AddGroup.class, EditGroup.class })
-    private String baoxiaoSum;
+    private BigDecimal baoxiaoSum;
     /**
      * 税率%
      */
     @NotBlank(message = "税率%不能为空", groups = { AddGroup.class, EditGroup.class })
-    private String taxRate;
+    private BigDecimal taxRate;
     /**
      * 进项税额（专票）
      */
     @NotBlank(message = "进项税额（专票）不能为空", groups = { AddGroup.class, EditGroup.class })
-    private String specialRicket;
+    private BigDecimal specialRicket;
 }

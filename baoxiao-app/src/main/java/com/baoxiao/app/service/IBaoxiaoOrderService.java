@@ -1,7 +1,8 @@
 package com.baoxiao.app.service;
 
-import com.baoxiao.app.domain.BaoxiaoOrder;
 import com.baoxiao.app.domain.dto.BaoxiaoOrderAddDto;
+import com.baoxiao.app.domain.dto.BaoxiaoOrderEditDto;
+import com.baoxiao.app.domain.vo.BaoxiaoOrderInfoVo;
 import com.baoxiao.app.domain.vo.BaoxiaoOrderVo;
 import com.baoxiao.app.domain.bo.BaoxiaoOrderBo;
 import com.baoxiao.common.core.page.TableDataInfo;
@@ -21,7 +22,7 @@ public interface IBaoxiaoOrderService {
     /**
      * 查询订单
      */
-    BaoxiaoOrderVo queryById(Long orderId);
+    BaoxiaoOrderInfoVo queryById(Long orderId);
 
     /**
      * 查询订单列表
@@ -41,7 +42,7 @@ public interface IBaoxiaoOrderService {
     /**
      * 修改订单
      */
-    Boolean updateByBo(BaoxiaoOrderBo bo);
+    Boolean updateByBo(BaoxiaoOrderEditDto bo);
 
     /**
      * 校验并批量删除订单信息

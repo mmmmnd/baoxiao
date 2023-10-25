@@ -2,9 +2,12 @@ package com.baoxiao.app.domain.vo;
 
 import com.alibaba.excel.annotation.ExcelIgnoreUnannotated;
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baoxiao.common.annotation.ExcelDictFormat;
 import com.baoxiao.common.convert.ExcelDictConvert;
 import lombok.Data;
+
+import java.math.BigDecimal;
 
 
 /**
@@ -33,15 +36,15 @@ public class BaoxiaoFeeVo {
      * 报销金额
      */
     @ExcelProperty(value = "报销金额")
-    private String baoxiaoSum;
+    private BigDecimal baoxiaoSum;
     /**
      * 税率%
      */
     @ExcelProperty(value = "税率%")
-    private String taxRate;
+    private BigDecimal taxRate;
     /**
      * 进项税额（专票）
      */
     @ExcelProperty(value = "进项税额（专票）")
-    private String specialRicket;
+    private BigDecimal specialRicket;
 }

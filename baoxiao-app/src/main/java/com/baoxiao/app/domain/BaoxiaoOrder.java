@@ -31,7 +31,7 @@ public class BaoxiaoOrder extends BaseEntity {
     /**
      * 订单编号
      */
-    private String orderNumber;
+    private Long orderNumber;
     /**
      * 订单类型
      */

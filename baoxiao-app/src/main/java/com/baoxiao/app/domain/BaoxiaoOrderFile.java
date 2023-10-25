@@ -1,10 +1,7 @@
 package com.baoxiao.app.domain;
 
 import com.baomidou.mybatisplus.annotation.*;
-import com.baoxiao.common.core.domain.BaseEntity;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 
 /**
@@ -16,6 +13,8 @@ import lombok.EqualsAndHashCode;
 @Data
 @Builder
 @EqualsAndHashCode()
+@NoArgsConstructor
+@AllArgsConstructor
 @TableName("baoxiao_order_file")
 public class BaoxiaoOrderFile {
 
