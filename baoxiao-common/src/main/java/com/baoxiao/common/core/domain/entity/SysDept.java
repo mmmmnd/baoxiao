@@ -44,6 +44,11 @@ public class SysDept extends TreeEntity<SysDept> {
     private Integer orderNum;
 
     /**
+     * 部门负责人id
+     */
+    private Long userId;
+
+    /**
      * 负责人
      */
     private String leader;

@@ -12,11 +12,11 @@
       <el-form-item label="制单人" prop="userId">
         <el-input v-model="queryParams.userId" placeholder="请输入制单人id" clearable @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="报销人" prop="baoxiaoUserId">
-        <el-input v-model="queryParams.baoxiaoUserId" placeholder="请输入报销人id" clearable @keyup.enter="handleQuery" />
+      <el-form-item label="申请人" prop="baoxiaoUserId">
+        <el-input v-model="queryParams.baoxiaoUserId" placeholder="请输入申请人id" clearable @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="报销公司" prop="companyId">
-        <el-input v-model="queryParams.companyId" placeholder="请输入报销公司id" clearable @keyup.enter="handleQuery" />
+      <el-form-item label="申请公司" prop="companyId">
+        <el-input v-model="queryParams.companyId" placeholder="请输入申请公司id" clearable @keyup.enter="handleQuery" />
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
@@ -76,13 +76,17 @@
           <span>{{ parseTime(scope.row.orderDate, "{y}-{m}-{d}") }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="报销类型" align="center" prop="baoxiaoTypeName" />
+      <el-table-column label="申请类型" align="center" prop="baoxiaoTypeName" />
       <el-table-column label="冲借款" align="center" prop="isOffsetLoanName" />
       <el-table-column label="部门分摊" align="center" prop="isDeptShareName" />
       <el-table-column label="状态 " align="center" prop="orderStatus" />
       <el-table-column label="制单人" align="center" prop="userName" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
+          <el-button link type="primary" icon="CreditCard" @click="handleOffsetLoan(scope.row)"
+                     v-hasPermi="['app:order:remove']">冲借款</el-button>
+          <el-button link type="primary" icon="Coin" @click="handleShare(scope.row)"
+                     v-hasPermi="['app:order:remove']">分摊</el-button>
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
                      v-hasPermi="['app:order:edit']">修改</el-button>
           <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
@@ -104,7 +108,7 @@
           <el-main>
             <el-row :gutter="10" class="mb8">
               <el-col :span="12">
-                <el-form-item label="报销公司：" prop="companyId">
+                <el-form-item label="申请公司：" prop="companyId">
                   <select-more keyName="companyName" value="companyId" label="companyName" v-model="form.companyId"
                                url="app/company/list" />
                 </el-form-item>
@@ -116,13 +120,13 @@
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="报销人员：" prop="baoxiaoUserId">
+                <el-form-item label="申请人员：" prop="baoxiaoUserId">
                   <select-more @change="selectMoreClone" keyName="nickName" value="userId" label="nickName"
                                v-model="form.baoxiaoUserId" url="/system/user/list" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="报销部门：">
+                <el-form-item label="申请部门：">
                   {{ form.deptName ?? "暂无部门信息" }}
                 </el-form-item>
               </el-col>
@@ -145,7 +149,37 @@
           </el-main>
         </el-container>
 
-        <el-container>
+        <el-container v-if="form.baoxiaoType == 2">
+          <el-header>
+            <el-divider content-position="left">收款人信息</el-divider>
+          </el-header>
+          <el-main>
+            <el-row :gutter="10" class="mb8">
+              <el-col :span="12">
+                <el-form-item label="收款人："  prop="collectionUser">
+                  <el-input type="text" v-model="form.collectionUser" placeholder="请填写收款人姓名" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="银行卡号："  prop="collectionBank">
+                  <el-input type="text" v-model="form.collectionBank" placeholder="请填写银行卡号" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="银行名称："  prop="collectionBankName">
+                  <el-input type="text" v-model="form.collectionBankName" placeholder="请填写银行名称" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="开户行:" prop="collectionBankAddress">
+                  <el-input v-model="form.collectionBankAddress" placeholder="请填写开户行" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-main>
+        </el-container>
+
+        <el-container v-if="form.baoxiaoType != 2">
           <el-header>
             <el-divider content-position="left">费用明细</el-divider>
           </el-header>
@@ -154,7 +188,7 @@
           </el-main>
         </el-container>
 
-        <el-container>
+        <el-container v-if="form.baoxiaoType != 2">
           <el-header>
             <el-divider content-position="left">收款人信息</el-divider>
           </el-header>
@@ -176,6 +210,60 @@
         <div class="dialog-footer">
           <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
           <el-button @click="cancel">取 消</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 冲借款 -->
+    <el-dialog :title="title" v-model="openCreditCard" width="40%" append-to-body>
+      <el-form ref="orderRef" :model="form" :rules="rules" label-width="100px">
+        <el-container>
+          <el-header>
+            <el-divider content-position="left">冲销借款</el-divider>
+          </el-header>
+          <el-main>
+            <el-row :gutter="10" class="mb8">
+              <el-col :span="12">
+                <el-form-item label="金额合计："  prop="collectionUser">
+                  <el-input type="text" v-model="form.totalAmount" placeholder="请填写金额合计" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="冲销金额："  prop="collectionBank">
+                  <el-input type="text" v-model="form.offsetLoanSum" placeholder="请填写冲销金额" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="还款金额：">
+                  <el-input type="text" v-model="form.repaymentSum" placeholder="请填写还款金额" disabled/>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="支付金额:">
+                  <el-input v-model="form.paymentSum" placeholder="请填写支付金额" disabled/>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-main>
+        </el-container>
+        <el-container>
+          <el-header>
+            <el-divider content-position="left">费用明细</el-divider>
+          </el-header>
+          <el-main>
+            <el-table :data="feeData">
+              <el-table-column label="收支项目" align="center" prop="feeItem" />
+              <el-table-column label="申请金额" align="center" prop="baoxiaoSum" />
+              <el-table-column label="税率%" align="center" prop="taxRate" />
+              <el-table-column label="进项税额（专票）" align="center" prop="specialRicket" />
+            </el-table>
+          </el-main>
+        </el-container>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
+          <el-button @click="cancelCreditCard">取 消</el-button>
         </div>
       </template>
     </el-dialog>
@@ -222,7 +310,7 @@ const data = reactive({
     orderType: undefined,
     orderDate: undefined,
     baoxiaoType: undefined,
-    baoxiaoSum: undefined,
+    repaymentSum: undefined,
     paymentSum: undefined,
     offsetLoanSum: undefined,
     totalAmount: undefined,
@@ -238,6 +326,11 @@ const data = reactive({
     companyId: undefined,
     clientId: undefined,
     auditId: undefined,
+    collectionSum: undefined,
+    collectionUser: undefined,
+    collectionBank: undefined,
+    collectionBankName: undefined,
+    collectionBankAddress: undefined
   },
   rules: {
     orderId: [{ required: true, message: "订单id不能为空", trigger: "blur" }],
@@ -251,10 +344,10 @@ const data = reactive({
       { required: true, message: "订单日期不能为空", trigger: "blur" },
     ],
     baoxiaoType: [
-      { required: true, message: "报销类型不能为空", trigger: "change" },
+      { required: true, message: "申请类型不能为空", trigger: "change" },
     ],
-    baoxiaoSum: [
-      { required: true, message: "报销金额不能为空", trigger: "blur" },
+    repaymentSum: [
+      { required: true, message: "申请金额不能为空", trigger: "blur" },
     ],
     paymentSum: [
       { required: true, message: "支付金额不能为空", trigger: "blur" },
@@ -288,13 +381,13 @@ const data = reactive({
     ],
     userId: [{ required: true, message: "制单人id不能为空", trigger: "blur" }],
     baoxiaoUserId: [
-      { required: true, message: "报销人id不能为空", trigger: "blur" },
+      { required: true, message: "申请人id不能为空", trigger: "blur" },
     ],
     deptId: [
-      { required: true, message: "报销部门id不能为空", trigger: "blur" },
+      { required: true, message: "申请部门id不能为空", trigger: "blur" },
     ],
     companyId: [
-      { required: true, message: "报销公司id不能为空", trigger: "blur" },
+      { required: true, message: "申请公司id不能为空", trigger: "blur" },
     ],
     clientId: [{ required: true, message: "客户id不能为空", trigger: "blur" }],
     remark: [{ required: true, message: "事由不能为空", trigger: "blur" }],
@@ -306,6 +399,18 @@ const data = reactive({
     updateBy: [{ required: true, message: "更新者不能为空", trigger: "blur" }],
     updateTime: [
       { required: true, message: "更新时间不能为空", trigger: "blur" },
+    ],
+    collectionUser: [
+      { required: true, message: "收款人姓名不能为空", trigger: "blur" },
+    ],
+    collectionBank: [
+      { required: true, message: "银行卡号不能为空", trigger: "blur" },
+    ],
+    collectionBankName: [
+      { required: true, message: "银行名称不能为空", trigger: "blur" },
+    ],
+    collectionBankAddress: [
+      { required: true, message: "开户行不能为空", trigger: "blur" },
     ],
   },
 });
@@ -382,10 +487,10 @@ const feeList = ref({
     {
       value: "baoxiaoSum",
       prop: "baoxiaoSum",
-      label: "报销金额",
+      label: "申请金额",
       rules: {
         required: true,
-        message: "请输入报销金额",
+        message: "请输入申请金额",
         trigger: "blur",
       },
     },
@@ -412,6 +517,7 @@ const feeList = ref({
   ],
 });
 
+const openCreditCard = ref(false);
 const feeData = ref([]);
 const collectionData =ref([]);
 const fileData = ref([]);
@@ -433,6 +539,11 @@ function cancel () {
   reset();
 }
 
+function cancelCreditCard () {
+  openCreditCard.value = false;
+  reset();
+}
+
 // 表单重置
 function reset () {
   form.value = {
@@ -441,7 +552,7 @@ function reset () {
     orderType: null,
     orderDate: null,
     baoxiaoType: null,
-    baoxiaoSum: null,
+    repaymentSum: null,
     paymentSum: null,
     offsetLoanSum: null,
     totalAmount: null,
@@ -462,6 +573,11 @@ function reset () {
     createTime: null,
     updateBy: null,
     updateTime: null,
+    collectionSum: null,
+    collectionUser: null,
+    collectionBank: null,
+    collectionBankName: null,
+    collectionBankAddress: null
   };
   proxy.resetForm("orderRef");
 }
@@ -505,7 +621,6 @@ async function handleUpdate (row) {
     feeData.value = response.data.fees
     collectionData.value = response.data.collections
     fileData.value = response.data.files;
-    form.value.orderId = response.data.orderId;
 
     loading.value = false;
     form.value = response.data;
@@ -516,11 +631,23 @@ async function handleUpdate (row) {
 
 /** 提交按钮 */
 async function submitForm () {
-  const fees = await feeRef.value.isSave(); //费用明细
-  const collections = await collectionRef.value.isSave(); //收款人信息
 
-  if (!fees || !collections) {
-    return false;
+  if(form.value.baoxiaoType != 2){
+
+    const fees = await feeRef.value.isSave(); //费用明细
+    const collections = await collectionRef.value.isSave(); //收款人信息
+
+    if (!fees || !collections) {
+      return false;
+    }
+  }
+
+  /*借款*/
+  if(form.value.baoxiaoType == 2){
+    collectionData.value = [];
+    form.value.collectionSum = 0;
+    const {collectionSum,collectionUser, collectionBank, collectionBankName, collectionBankAddress} = form.value;
+    collectionData.value.push({collectionSum,collectionUser,collectionBank,collectionBankName,collectionBankAddress});
   }
 
   const fileIds = fileData.value.map((file) => file.fileId);
@@ -532,7 +659,7 @@ async function submitForm () {
       form.value.fileIds = fileIds;
 
       buttonLoading.value = true;
-      console.log(form.value.orderId)
+      console.log(form.value)
       if (form.value.orderId != null) {
         updateOrder(form.value)
           .then((response) => {
@@ -595,5 +722,26 @@ const selectMoreClone = (index, o) => {
   form.value.baoxiaoUserName = o[index].nickName;
 };
 
-getList();
+/*冲借款*/
+const handleOffsetLoan =(row) => {
+
+  const _orderId = row.orderId || ids.value;
+  getOrder(_orderId).then((response) => {
+    console.log(response)
+    form.value = response.data;
+    feeData.value = response.data.fees
+    collectionData.value = response.data.collections
+    fileData.value = response.data.files;
+
+    title.value = "冲借款"
+    openCreditCard.value = true;
+  });
+}
+
+/*分摊*/
+const handleShare = () => {
+  console.log(2)
+}
+
+  getList();
 </script>

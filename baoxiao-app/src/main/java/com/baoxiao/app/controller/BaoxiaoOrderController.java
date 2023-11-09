@@ -105,6 +105,6 @@ public class BaoxiaoOrderController extends BaseController {
     @DeleteMapping("/{orderIds}")
     public R<Void> remove(@NotEmpty(message = "主键不能为空")
                           @PathVariable Long[] orderIds) {
-        return toAjax(iBaoxiaoOrderService.deleteWithValidByIds(Arrays.asList(orderIds), true));
+        return toAjax(iBaoxiaoOrderService.deleteWithValidByIds(Arrays.asList(orderIds),false));
     }
 }

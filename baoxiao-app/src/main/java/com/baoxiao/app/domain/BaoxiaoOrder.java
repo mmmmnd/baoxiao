@@ -47,7 +47,7 @@ public class BaoxiaoOrder extends BaseEntity {
     /**
      * 报销金额
      */
-    private BigDecimal baoxiaoSum;
+    private BigDecimal repaymentSum;
     /**
      * 支付金额
      */

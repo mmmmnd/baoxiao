@@ -103,7 +103,7 @@ public class BaoxiaoOrderInfoVo {
      * 报销金额
      */
     @ExcelProperty(value = "报销金额")
-    private BigDecimal baoxiaoSum;
+    private BigDecimal repaymentSum;
 
     /**
      * 支付金额

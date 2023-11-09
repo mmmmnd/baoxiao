@@ -238,8 +238,11 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
     @CacheEvict(cacheNames = CacheNames.SYS_DEPT, key = "#dept.deptId")
     @Override
     public int updateDept(SysDept dept) {
-        SysDept newParentDept = baseMapper.selectById(dept.getParentId());
         SysDept oldDept = baseMapper.selectById(dept.getDeptId());
+        SysUser userInfo = userMapper.selectUserById(dept.getUserId());
+        SysDept newParentDept = baseMapper.selectById(dept.getParentId());
+
+        dept.setLeader(userInfo.getNickName());
         if (ObjectUtil.isNotNull(newParentDept) && ObjectUtil.isNotNull(oldDept)) {
             String newAncestors = newParentDept.getAncestors() + StringUtils.SEPARATOR + newParentDept.getDeptId();
             String oldAncestors = oldDept.getAncestors();

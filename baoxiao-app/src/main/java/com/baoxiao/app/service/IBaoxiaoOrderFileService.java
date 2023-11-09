@@ -74,4 +74,5 @@ public interface IBaoxiaoOrderFileService {
      * 文件中未存在orderId的将进行批量删除
      */
     void batchUpdaeDeleteByOrderId(List<Long> fileIds, Long orderId);
+
 }

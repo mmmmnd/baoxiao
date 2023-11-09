@@ -1,6 +1,6 @@
 package com.baoxiao.app.constant;
 
-public interface baoxiaoConstants {
+public interface BaoxiaoConstants {
 
     String BAOXIAO = "baoxiao:";
 

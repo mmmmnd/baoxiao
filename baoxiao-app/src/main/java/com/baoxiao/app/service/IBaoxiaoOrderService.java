@@ -48,4 +48,5 @@ public interface IBaoxiaoOrderService {
      * 校验并批量删除订单信息
      */
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
+
 }

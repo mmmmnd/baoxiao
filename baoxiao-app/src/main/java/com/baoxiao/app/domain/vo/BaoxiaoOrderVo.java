@@ -4,16 +4,11 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 import com.baoxiao.common.annotation.DictFormat;
-import com.baoxiao.common.core.validate.AddGroup;
-import com.baoxiao.common.core.validate.EditGroup;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.alibaba.excel.annotation.ExcelIgnoreUnannotated;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.baoxiao.common.annotation.ExcelDictFormat;
 import com.baoxiao.common.convert.ExcelDictConvert;
 import lombok.Data;
-
-import javax.validation.constraints.NotNull;
 
 
 /**
@@ -64,7 +59,7 @@ public class BaoxiaoOrderVo {
      * 报销金额
      */
     @ExcelProperty(value = "报销金额")
-    private BigDecimal baoxiaoSum;
+    private BigDecimal repaymentSum;
 
     /**
      * 支付金额

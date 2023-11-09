@@ -2,7 +2,6 @@ package com.baoxiao.app.domain.dto;
 
 import com.baoxiao.app.domain.BaoxiaoCollection;
 import com.baoxiao.app.domain.BaoxiaoFee;
-import com.baoxiao.app.domain.BaoxiaoOrderFile;
 import com.baoxiao.common.core.validate.AddGroup;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

@@ -104,7 +104,7 @@
                </el-col>
                <el-col :span="12">
                   <el-form-item label="负责人" prop="leader">
-                     <el-input v-model="form.leader" placeholder="请输入负责人" maxlength="20" />
+                    <select-more @change="selectMoreClone" keyName="nickName" value="userId" label="nickName" v-model="form.leader" url="/system/user/list" />
                   </el-form-item>
                </el-col>
                <el-col :span="12">
@@ -142,6 +142,7 @@
 
 <script setup name="Dept">
 import { listDept, getDept, delDept, addDept, updateDept, listDeptExcludeChild } from "@/api/system/dept";
+import SelectMore from "@/components/SelectMore/index.vue";
 
 const { proxy } = getCurrentInstance();
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable");
@@ -273,6 +274,11 @@ function handleDelete(row) {
     proxy.$modal.msgSuccess("删除成功");
   }).catch(() => {});
 }
+
+const selectMoreClone = (index, o) => {
+  form.value.userId = o[index].userId;
+  form.value.leader = o[index].nickName;
+};
 
 getList();
 </script>

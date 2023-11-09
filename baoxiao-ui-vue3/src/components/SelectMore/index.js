@@ -107,9 +107,13 @@ export const useListEffect = (props, emit, selectMoreRef) => {
     },
     set: async function (val) {
       emit('update:modelValue', val)
-      emit('change', val, list.value)
+
     }
   })
+  const change = () => {
+    const index = selectMoreRef.value.hoverIndex;
+    emit('change', index, list.value);
+  }
 
   // 多选时选中的文字
   const selectedArrText = props.multiple ? computed(() => {
@@ -167,7 +171,7 @@ export const useListEffect = (props, emit, selectMoreRef) => {
     }
   })
 
-  return { selectVal, selectedArrText, keywords, showLoading, list, getList, visibleChange }
+  return { selectVal, selectedArrText, keywords, showLoading, list, change, getList, visibleChange }
 }
 
 // 页面配置文字

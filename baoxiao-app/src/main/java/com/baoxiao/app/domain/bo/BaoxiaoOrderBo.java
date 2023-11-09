@@ -55,7 +55,7 @@ public class BaoxiaoOrderBo extends BaseEntity {
      * 报销金额
      */
     @NotNull(message = "报销金额不能为空", groups = { AddGroup.class, EditGroup.class })
-    private BigDecimal baoxiaoSum;
+    private BigDecimal repaymentSum;
 
     /**
      * 支付金额

@@ -117,5 +117,4 @@ public class BaoxiaoFeeServiceImpl implements IBaoxiaoFeeService {
         baseMapper.insertBatch(list);
     }
 
-
 }
