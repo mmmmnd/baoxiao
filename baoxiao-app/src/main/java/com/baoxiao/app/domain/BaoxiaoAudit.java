@@ -2,8 +2,7 @@ package com.baoxiao.app.domain;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.baoxiao.common.core.domain.BaseEntity;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 
 /**
@@ -13,6 +12,9 @@ import lombok.EqualsAndHashCode;
  * @date 2023-11-10
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @TableName("baoxiao_audit")
 public class BaoxiaoAudit extends BaseEntity {
@@ -41,9 +43,21 @@ public class BaoxiaoAudit extends BaseEntity {
      */
     private String position;
     /**
+     * 审批节点
+     */
+    private Integer activeNode;
+    /**
+     * 节点
+     */
+    private Integer node;
+    /**
+     * 最大节点
+     */
+    private Integer maxNode;
+    /**
      * 状态
      */
-    private String status;
+    private Integer status;
     /**
      * 备注
      */

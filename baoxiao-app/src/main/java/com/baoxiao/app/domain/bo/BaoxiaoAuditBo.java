@@ -50,10 +50,20 @@ public class BaoxiaoAuditBo extends BaseEntity {
     private String position;
 
     /**
+     * 审批节点
+     */
+    @NotBlank(message = "审批节点不能为空", groups = { AddGroup.class, EditGroup.class })
+    private Integer activeNode;
+    /**
+     * 节点
+     */
+    @NotBlank(message = "节点不能为空", groups = { AddGroup.class, EditGroup.class })
+    private Integer node;
+    /**
      * 状态
      */
     @NotBlank(message = "状态不能为空", groups = { AddGroup.class, EditGroup.class })
-    private String status;
+    private Integer status;
 
     /**
      * 备注

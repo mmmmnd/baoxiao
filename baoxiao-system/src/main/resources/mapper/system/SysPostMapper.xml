@@ -33,4 +33,11 @@
         where u.user_name = #{userName}
     </select>
 
+    <select id="selectPostByUserId" parameterType="Long" resultType="String">
+        select p.post_name
+        from sys_post p
+                 left join sys_user_post up on up.post_id = p.post_id
+                 left join sys_user u on u.user_id = up.user_id
+        where u.user_id = #{userId}
+    </select>
 </mapper>

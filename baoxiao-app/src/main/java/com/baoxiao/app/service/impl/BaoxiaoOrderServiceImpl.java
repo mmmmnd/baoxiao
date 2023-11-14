@@ -54,6 +54,8 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
 
     private final BaoxiaoOrderFileServiceImpl baoxiaoOrderFileService;
 
+    private final BaoxiaoAuditServiceImpl baoxiaoAuditService;
+
     /**
      * 查询订单
      */
@@ -219,6 +221,9 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
         List<BaoxiaoCollection> collections = dto.getCollections();
         collections.forEach(collection -> collection.setCollectionId(baoxiaoOrder.getCollectionId()));
         baoxiaoCollectionService.batchInsertByList(collections);
+
+        /*生成审批流*/
+        baoxiaoAuditService.insertByBo(order.getOrderId());
 
         return baseMapper.updateById(order) > 0;
     }

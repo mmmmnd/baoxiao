@@ -87,6 +87,8 @@
                      v-hasPermi="['app:order:remove']">冲借款</el-button>
           <el-button link type="primary" icon="Coin" @click="handleShare(scope.row)"
                      v-hasPermi="['app:order:remove']">分摊</el-button>
+          <el-button link type="primary" icon="Tickets" @click="handleAudit(scope.row)"
+                     v-hasPermi="['app:audit:list']">审批进度</el-button>
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
                      v-hasPermi="['app:order:edit']">修改</el-button>
           <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
@@ -152,7 +154,7 @@
         <el-container v-if="form.baoxiaoType == 2">
           <el-header>
             <el-divider content-position="left">收款人信息</el-divider>
-          </el-header>
+          </el-header>++
           <el-main>
             <el-row :gutter="10" class="mb8">
               <el-col :span="12">
@@ -267,6 +269,22 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- 审批进度 -->
+    <el-dialog :title="title" v-model="openAudit" width="40%" append-to-body>
+      <el-table v-loading="loading" :data="AuditData">
+        <el-table-column label="职位" align="center" prop="position" />
+        <el-table-column label="用户名" align="center" prop="userName"/>
+        <el-table-column label="状态" align="center" prop="statusName" />
+        <el-table-column label="备注" align="center" prop="remark" />
+      </el-table>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button :loading="buttonLoading" type="primary" @click="openAudit = false">确 定</el-button>
+          <el-button @click="openAudit = false">取 消</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -278,6 +296,7 @@ import {
   addOrder,
   updateOrder,
 } from "@/api/app/order";
+import { getOrderAuditList } from "@/api/app/audit";
 import SelectMore from "@/components/SelectMore/index.vue";
 import EditTable from "@/views/component/editTable/index.vue";
 import OrderFile from "@/views/component/orderFile/index.vue";
@@ -518,6 +537,8 @@ const feeList = ref({
 });
 
 const openCreditCard = ref(false);
+const openAudit = ref(false);
+const AuditData = ref([]);
 const feeData = ref([]);
 const collectionData =ref([]);
 const fileData = ref([]);
@@ -741,6 +762,14 @@ const handleOffsetLoan =(row) => {
 /*分摊*/
 const handleShare = () => {
   console.log(2)
+}
+
+/*审批进度*/
+const handleAudit = (row) => {
+  getOrderAuditList(row.orderId).then(res => {
+    openAudit.value = true;
+    AuditData.value = res.rows;
+  })
 }
 
   getList();

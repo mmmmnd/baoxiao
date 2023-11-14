@@ -174,4 +174,15 @@ public class SysPostServiceImpl implements ISysPostService {
     public int updatePost(SysPost post) {
         return baseMapper.updateById(post);
     }
+
+    /**
+     * 根据用户id获取当前职位
+     *
+     * @param userId 用户id
+     * @return 结果
+     */
+    @Override
+    public String selectPostByUserId(Long userId) {
+        return baseMapper.selectPostByUserId(userId);
+    }
 }

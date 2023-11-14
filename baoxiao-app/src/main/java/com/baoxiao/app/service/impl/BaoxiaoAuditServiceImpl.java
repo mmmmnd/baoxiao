@@ -1,6 +1,9 @@
 package com.baoxiao.app.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baoxiao.app.domain.dto.BaoxiaoAuditEditDto;
+import com.baoxiao.app.enums.AuditTypeEnum;
+import com.baoxiao.common.core.domain.entity.SysDept;
 import com.baoxiao.common.core.domain.model.LoginUser;
 import com.baoxiao.common.core.page.TableDataInfo;
 import com.baoxiao.common.core.domain.PageQuery;
@@ -8,6 +11,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baoxiao.common.helper.LoginHelper;
+import com.baoxiao.system.service.impl.SysDeptServiceImpl;
+import com.baoxiao.system.service.impl.SysPostServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.baoxiao.app.domain.bo.BaoxiaoAuditBo;
@@ -16,9 +21,7 @@ import com.baoxiao.app.domain.BaoxiaoAudit;
 import com.baoxiao.app.mapper.BaoxiaoAuditMapper;
 import com.baoxiao.app.service.IBaoxiaoAuditService;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Collection;
+import java.util.*;
 
 /**
  * 审批流Service业务层处理
@@ -32,6 +35,9 @@ public class BaoxiaoAuditServiceImpl implements IBaoxiaoAuditService {
 
     private final BaoxiaoAuditMapper baseMapper;
 
+    private final SysDeptServiceImpl sysDeptService;
+
+    private final SysPostServiceImpl sysPostService;
     /**
      * 查询审批流
      */
@@ -69,25 +75,85 @@ public class BaoxiaoAuditServiceImpl implements IBaoxiaoAuditService {
      * 新增审批流
      */
     @Override
-    public Boolean insertByBo(BaoxiaoAuditBo bo) {
+    public Boolean insertByBo(Long orderId) {
+        Integer index = 0;
         LoginUser loginUser = LoginHelper.getLoginUser();
-//        BaoxiaoAudit add = BeanUtil.toBean(bo, BaoxiaoAudit.class);
-//        validEntityBeforeSave(add);
-//        boolean flag = baseMapper.insert(add) > 0;
-//        if (flag) {
-//            bo.setAuditId(add.getAuditId());
-//        }
-//        return flag;
+        Long deptId = loginUser.getDeptId();
+        SysDept sysDept = sysDeptService.selectDeptById(deptId);
+        List<BaoxiaoAudit> list = new ArrayList<>();
+
+        do {
+            String position = sysPostService.selectPostByUserId(sysDept.getUserId());
+
+            BaoxiaoAudit build = BaoxiaoAudit.builder()
+                .orderId(orderId)
+                .userId(sysDept.getUserId())
+                .userName(sysDept.getLeader())
+                .activeNode(0)
+                .node(index++)
+                .position(position)
+                .status(0)
+                .remark("")
+                .build();
+            list.add(build);
+
+            if(list.size() == 1){
+                /*后期有需求可以根据pid按条件查找某个公司*/
+                sysDept = sysDeptService.selectDeptById(106L);
+                position = sysPostService.selectPostByUserId(sysDept.getUserId());
+
+                list.add(BaoxiaoAudit.builder()
+                            .orderId(orderId)
+                            .userId(sysDept.getUserId())
+                            .userName(sysDept.getLeader())
+                            .activeNode(0)
+                            .node(index++)
+                            .position(position)
+                            .status(0)
+                            .remark("")
+                            .build());
+            }
+
+            sysDept = sysDeptService.selectDeptById(sysDept.getParentId());
+        } while (sysDept.getParentId() != 0) ;
+
+        Integer finalIndex = index;
+        list.get(0).setActiveNode(1);
+        list.forEach(audit -> audit.setMaxNode(finalIndex));
+
+        return baseMapper.insertBatch(list);
     }
 
     /**
      * 修改审批流
      */
     @Override
-    public Boolean updateByBo(BaoxiaoAuditBo bo) {
-        BaoxiaoAudit update = BeanUtil.toBean(bo, BaoxiaoAudit.class);
-        validEntityBeforeSave(update);
-        return baseMapper.updateById(update) > 0;
+    public Boolean updateByBo(BaoxiaoAuditEditDto dto) {
+        BaoxiaoAudit audit = baseMapper.selectById(dto.getAuditId());
+        audit.setActiveNode(AuditTypeEnum.TYPE_5.getKey());
+        audit.setRemark(dto.getRemark());
+
+        AuditTypeEnum byCode = AuditTypeEnum.getByCode(dto.getStatus());
+        if (Objects.requireNonNull(byCode) == AuditTypeEnum.TYPE_1) {
+            audit.setStatus(AuditTypeEnum.TYPE_1.getKey());
+
+            /*判断是否是最后一项*/
+            if(!audit.getMaxNode().equals(audit.getNode()) ){
+                baseMapper.updateById(audit);
+
+                /*查找下一个审批节点置换为当前审批*/
+                LambdaQueryWrapper<BaoxiaoAudit> lqw = Wrappers.lambdaQuery();
+
+                lqw.eq(BaoxiaoAudit::getNode, audit.getNode() + 1);
+                audit = baseMapper.selectOne(lqw);
+                audit.setActiveNode(AuditTypeEnum.TYPE_4.getKey());
+            }
+
+        } else if (byCode == AuditTypeEnum.TYPE_2) {
+            audit.setStatus(AuditTypeEnum.TYPE_2.getKey());
+        }
+
+        return baseMapper.updateById(audit) > 0;
     }
 
     /**
@@ -106,5 +172,29 @@ public class BaoxiaoAuditServiceImpl implements IBaoxiaoAuditService {
             //TODO 做一些业务上的校验,判断是否需要校验
         }
         return baseMapper.deleteBatchIds(ids) > 0;
+    }
+
+    /**
+     * 获取个人审批流
+     */
+    @Override
+    public TableDataInfo<BaoxiaoAuditVo> queryUserAduitList(PageQuery pageQuery) {
+        LambdaQueryWrapper<BaoxiaoAudit> lqw = Wrappers.lambdaQuery();
+        lqw.eq(BaoxiaoAudit::getActiveNode, 1);
+        IPage<BaoxiaoAuditVo> baoxiaoAuditVoIPage = baseMapper.selectAuditVoPage(pageQuery.build(), lqw);
+
+        return TableDataInfo.build(baoxiaoAuditVoIPage);
+    }
+
+    /**
+     * 获取订单审批流
+     */
+    @Override
+    public TableDataInfo<BaoxiaoAuditVo> queryOrderAuditList(Long orderId) {
+        LambdaQueryWrapper<BaoxiaoAudit> lqw = Wrappers.lambdaQuery();
+        lqw.eq(BaoxiaoAudit::getOrderId,orderId);
+        List<BaoxiaoAuditVo> baoxiaoAuditVos = baseMapper.selectVoList(lqw);
+
+        return TableDataInfo.build(baoxiaoAuditVos);
     }
 }

@@ -28,4 +28,12 @@ public interface SysPostMapper extends BaseMapperPlus<SysPostMapper, SysPost, Sy
      */
     List<SysPost> selectPostsByUserName(String userName);
 
+    /**
+     * 根据用户id获取当前职位
+     *
+     * @param userId 用户id
+     * @return 结果
+     */
+    String selectPostByUserId(Long userId);
+
 }
