@@ -35,7 +35,7 @@ public interface IBaoxiaoAuditService {
     /**
      * 新增审批流
      */
-    Boolean insertByBo(Long orderId);
+    Boolean insertByBo(Long orderId,Long deptId);
 
     /**
      * 修改审批流

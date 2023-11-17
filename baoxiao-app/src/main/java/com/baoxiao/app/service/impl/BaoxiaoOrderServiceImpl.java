@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baoxiao.app.constant.ConfigConstants;
 import com.baoxiao.app.constant.BaoxiaoConstants;
+import com.baoxiao.app.enums.OrderStatusEnum;
 import com.baoxiao.app.enums.OrderTypeEnum;
 import com.baoxiao.app.domain.BaoxiaoCollection;
 import com.baoxiao.app.domain.BaoxiaoFee;
@@ -222,8 +223,6 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
         collections.forEach(collection -> collection.setCollectionId(baoxiaoOrder.getCollectionId()));
         baoxiaoCollectionService.batchInsertByList(collections);
 
-        /*生成审批流*/
-        baoxiaoAuditService.insertByBo(order.getOrderId());
 
         return baseMapper.updateById(order) > 0;
     }
@@ -249,7 +248,20 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
         return baseMapper.deleteBatchIds(ids) > 0;
     }
 
-    /*借款审批流*/
+    /**
+     * 提交订单
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean insertOrderAudit(Long orderId) {
+        BaoxiaoOrder order = baseMapper.selectById(orderId);
+        order.setOrderStatus(OrderStatusEnum.status_3.getKey());
+
+        /*生成审批流*/
+        baoxiaoAuditService.insertByBo(order.getOrderId(),order.getDeptId());
+        return baseMapper.updateById(order) > 0;
+    }
+
 
     /*获取个人借款金额*/
 }

@@ -2,8 +2,6 @@ package com.baoxiao.app.mapper;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.Constants;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baoxiao.app.domain.BaoxiaoAudit;
 import com.baoxiao.app.domain.vo.BaoxiaoAuditVo;
 import com.baoxiao.common.annotation.DataColumn;
@@ -11,7 +9,6 @@ import com.baoxiao.common.annotation.DataPermission;
 import com.baoxiao.common.core.mapper.BaseMapperPlus;
 import org.apache.ibatis.annotations.Param;
 
-import java.util.List;
 
 /**
  * 审批流Mapper接口

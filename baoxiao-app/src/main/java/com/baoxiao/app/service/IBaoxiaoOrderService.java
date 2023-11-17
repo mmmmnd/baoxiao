@@ -49,4 +49,8 @@ public interface IBaoxiaoOrderService {
      */
     Boolean deleteWithValidByIds(Collection<Long> ids, Boolean isValid);
 
+    /**
+     * 提交订单
+     */
+    Boolean insertOrderAudit(Long orderId);
 }

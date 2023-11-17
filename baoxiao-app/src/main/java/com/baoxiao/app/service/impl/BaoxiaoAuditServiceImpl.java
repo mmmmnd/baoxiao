@@ -75,10 +75,8 @@ public class BaoxiaoAuditServiceImpl implements IBaoxiaoAuditService {
      * 新增审批流
      */
     @Override
-    public Boolean insertByBo(Long orderId) {
+    public Boolean insertByBo(Long orderId, Long deptId) {
         Integer index = 0;
-        LoginUser loginUser = LoginHelper.getLoginUser();
-        Long deptId = loginUser.getDeptId();
         SysDept sysDept = sysDeptService.selectDeptById(deptId);
         List<BaoxiaoAudit> list = new ArrayList<>();
 

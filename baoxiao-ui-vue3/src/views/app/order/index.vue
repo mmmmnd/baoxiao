@@ -87,6 +87,8 @@
                      v-hasPermi="['app:order:remove']">冲借款</el-button>
           <el-button link type="primary" icon="Coin" @click="handleShare(scope.row)"
                      v-hasPermi="['app:order:remove']">分摊</el-button>
+          <el-button link type="primary" icon="Coin" @click="handleShare(scope.row)"
+                     v-hasPermi="['app:order:remove']">提交</el-button>
           <el-button link type="primary" icon="Tickets" @click="handleAudit(scope.row)"
                      v-hasPermi="['app:audit:list']">审批进度</el-button>
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
@@ -154,7 +156,7 @@
         <el-container v-if="form.baoxiaoType == 2">
           <el-header>
             <el-divider content-position="left">收款人信息</el-divider>
-          </el-header>++
+          </el-header>
           <el-main>
             <el-row :gutter="10" class="mb8">
               <el-col :span="12">

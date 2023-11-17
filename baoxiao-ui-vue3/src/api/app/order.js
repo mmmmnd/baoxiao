@@ -68,4 +68,12 @@ export function delOrderFile (fileId) {
   })
 }
 
+/*提交*/
+export function orderAudit (orderId) {
+  return request({
+    url: '/app/order/orderAudit/' + orderId,
+    method: 'delete'
+  })
+}
+
 

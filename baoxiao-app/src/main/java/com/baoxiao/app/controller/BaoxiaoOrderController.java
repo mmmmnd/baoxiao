@@ -107,4 +107,17 @@ public class BaoxiaoOrderController extends BaseController {
                           @PathVariable Long[] orderIds) {
         return toAjax(iBaoxiaoOrderService.deleteWithValidByIds(Arrays.asList(orderIds),false));
     }
+
+    /**
+     * 提交订单
+     *
+     * @param orderId 主键
+     */
+    @SaCheckPermission("app:order:orderAudit")
+    @Log(title = "订单提交", businessType = BusinessType.INSERT)
+    @PostMapping("/orderAudit/{orderId}")
+    public R<Void> orderAudit(@NotNull(message = "主键不能为空")
+                              @PathVariable Long orderId) {
+        return toAjax(iBaoxiaoOrderService.insertOrderAudit(orderId));
+    }
 }

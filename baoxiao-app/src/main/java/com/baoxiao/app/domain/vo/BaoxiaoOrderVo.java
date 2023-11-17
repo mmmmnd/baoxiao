@@ -109,7 +109,7 @@ public class BaoxiaoOrderVo {
      * 状态 （0显示 1隐藏）
      */
     @ExcelProperty(value = "状态 ", converter = ExcelDictConvert.class)
-    @ExcelDictFormat(readConverterExp = "0=显示,1=隐藏")
+    @ExcelDictFormat(readConverterExp = "0=显示,1=提交")
     private Integer orderStatus;
 
     /**
