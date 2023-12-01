@@ -81,7 +81,7 @@ public class BaoxiaoOrderController extends BaseController {
     @RepeatSubmit()
     @PostMapping()
     public R<Void> add(@Validated(AddGroup.class) @RequestBody BaoxiaoOrderAddDto dto) {
-        return toAjax(iBaoxiaoOrderService.insertByBo(dto));
+        return toAjax(iBaoxiaoOrderService.insertOrder(dto));
     }
 
     /**
@@ -92,7 +92,7 @@ public class BaoxiaoOrderController extends BaseController {
     @RepeatSubmit()
     @PutMapping()
     public R<Void> edit(@Validated(EditGroup.class) @RequestBody BaoxiaoOrderEditDto dto) {
-        return toAjax(iBaoxiaoOrderService.updateByBo(dto));
+        return toAjax(iBaoxiaoOrderService.updateOrder(dto));
     }
 
     /**
@@ -115,9 +115,22 @@ public class BaoxiaoOrderController extends BaseController {
      */
     @SaCheckPermission("app:order:orderAudit")
     @Log(title = "订单提交", businessType = BusinessType.INSERT)
-    @PostMapping("/orderAudit/{orderId}")
+    @GetMapping("/orderAudit/{orderId}")
     public R<Void> orderAudit(@NotNull(message = "主键不能为空")
                               @PathVariable Long orderId) {
         return toAjax(iBaoxiaoOrderService.insertOrderAudit(orderId));
     }
+
+    /**
+     * 获取已审批完毕借款
+     */
+    @SaCheckPermission("app:order:orderUserBorrow")
+    @Log(title = "订单借款", businessType = BusinessType.OTHER)
+    @GetMapping("/orderUserBorrow/{orderId}")
+    public TableDataInfo<BaoxiaoOrderVo> orderUserBorrow(@NotNull(message = "主键不能为空")
+                                                         @PathVariable Long orderId,
+                                                         PageQuery pageQuery) {
+        return iBaoxiaoOrderService.orderUserBorrow(orderId, pageQuery);
+    }
+
 }

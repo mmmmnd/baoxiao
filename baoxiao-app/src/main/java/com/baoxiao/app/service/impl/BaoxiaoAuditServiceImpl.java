@@ -1,8 +1,10 @@
 package com.baoxiao.app.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baoxiao.app.domain.bo.BaoxiaoOrderBo;
 import com.baoxiao.app.domain.dto.BaoxiaoAuditEditDto;
 import com.baoxiao.app.enums.AuditTypeEnum;
+import com.baoxiao.app.enums.OrderStatusEnum;
 import com.baoxiao.common.core.domain.entity.SysDept;
 import com.baoxiao.common.core.domain.model.LoginUser;
 import com.baoxiao.common.core.page.TableDataInfo;
@@ -11,9 +13,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baoxiao.common.helper.LoginHelper;
+import com.baoxiao.common.utils.spring.SpringUtils;
 import com.baoxiao.system.service.impl.SysDeptServiceImpl;
 import com.baoxiao.system.service.impl.SysPostServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.stereotype.Service;
 import com.baoxiao.app.domain.bo.BaoxiaoAuditBo;
 import com.baoxiao.app.domain.vo.BaoxiaoAuditVo;
@@ -149,6 +154,13 @@ public class BaoxiaoAuditServiceImpl implements IBaoxiaoAuditService {
 
         } else if (byCode == AuditTypeEnum.TYPE_2) {
             audit.setStatus(AuditTypeEnum.TYPE_2.getKey());
+            BaoxiaoOrderBo bo = new BaoxiaoOrderBo();
+            bo.setOrderId(audit.getOrderId());
+            bo.setOrderStatus(OrderStatusEnum.status_6.getKey());
+
+            ApplicationContext context = new AnnotationConfigApplicationContext();
+            BaoxiaoOrderServiceImpl orderService = context.getBean(BaoxiaoOrderServiceImpl.class);
+            orderService.updateByBo(bo);
         }
 
         return baseMapper.updateById(audit) > 0;

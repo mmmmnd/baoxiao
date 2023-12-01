@@ -112,12 +112,12 @@ public class BaoxiaoAuditController extends BaseController {
      *
      * @param auditIds 主键串
      */
-    @SaCheckPermission("app:audit:remove")
-    @Log(title = "审批流", businessType = BusinessType.DELETE)
-    @DeleteMapping("/{auditIds}")
-    public R<Void> remove(@NotEmpty(message = "主键不能为空")
-                          @PathVariable Long[] auditIds) {
-        return toAjax(iBaoxiaoAuditService.deleteWithValidByIds(Arrays.asList(auditIds), true));
-    }
+//    @SaCheckPermission("app:audit:remove")
+//    @Log(title = "审批流", businessType = BusinessType.DELETE)
+//    @DeleteMapping("/{auditIds}")
+//    public R<Void> remove(@NotEmpty(message = "主键不能为空")
+//                          @PathVariable Long[] auditIds) {
+//        return toAjax(iBaoxiaoAuditService.deleteWithValidByIds(Arrays.asList(auditIds), true));
+//    }
 
 }

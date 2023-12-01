@@ -114,7 +114,7 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean insertByBo(BaoxiaoOrderAddDto dto) {
+    public Boolean insertOrder(BaoxiaoOrderAddDto dto) {
         LoginUser loginUser = LoginHelper.getLoginUser();
         BaoxiaoOrder order = BeanUtil.toBean(dto, BaoxiaoOrder.class);
 
@@ -192,7 +192,7 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(cacheNames = BaoxiaoConstants.BAOXIAO_ORDER_ORDER_ID, key = "#orderId", condition = "#orderId != null")
-    public Boolean updateByBo(BaoxiaoOrderEditDto dto) {
+    public Boolean updateOrder(BaoxiaoOrderEditDto dto) {
         BaoxiaoOrder order = BeanUtil.toBean(dto, BaoxiaoOrder.class);
         BaoxiaoOrder baoxiaoOrder = baseMapper.selectById(order.getOrderId());
 
@@ -225,6 +225,16 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
 
 
         return baseMapper.updateById(order) > 0;
+    }
+
+    /**
+     * 修改订单
+     */
+    @Override
+    public Boolean updateByBo(BaoxiaoOrderBo bo) {
+        BaoxiaoOrder update = BeanUtil.toBean(bo, BaoxiaoOrder.class);
+        validEntityBeforeSave(update);
+        return baseMapper.updateById(update) > 0;
     }
 
     /**
@@ -262,6 +272,11 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
         return baseMapper.updateById(order) > 0;
     }
 
+    /**
+     * 获取已审批完毕借款
+     */
+    @Override
+    public TableDataInfo<BaoxiaoOrderVo> orderUserBorrow(Long orderId, PageQuery pageQuery) {
 
-    /*获取个人借款金额*/
+    }
 }

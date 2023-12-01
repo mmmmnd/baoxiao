@@ -88,11 +88,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         select o.order_id,o.order_number,o.order_type,o.order_date,o.baoxiao_type,o.repayment_sum,o.payment_sum,o.offset_loan_sum,o.total_amount,o.is_offset_loan,o.is_dept_share,o.order_status,o.user_id,o.user_name,o.baoxiao_user_id,o.baoxiao_user_name,o.dept_id,o.dept_name,o.company_id,o.client_id,o.remark,o.audit_id,
             f.fee_id,f.fee_item,f.baoxiao_sum,f.tax_rate,f.special_ricket,
             c.collection_id,c.collection_sum,c.collection_user,c.collection_bank,c.collection_bank_name,c.collection_bank_address,
-            of.file_id,of.order_id as oid,of.oss_id,of.file_name,of.original_name,of.url
+            bof.file_id,bof.order_id as oid,bof.oss_id,bof.file_name,bof.original_name,bof.url
         from baoxiao_order o
         left join baoxiao_fee f on o.fee_id = f.fee_id
         left join baoxiao_collection c on o.collection_id = c.collection_id
-        left join baoxiao_order_file of on o.order_id = of.order_id
+        left join baoxiao_order_file bof on o.order_id = bof.order_id
         where o.del_flag = 0
         <if test="orderId != '' and orderId != null">
             and o.order_id = #{orderId}

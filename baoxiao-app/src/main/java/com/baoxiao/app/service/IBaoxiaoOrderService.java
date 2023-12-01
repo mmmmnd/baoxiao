@@ -37,12 +37,17 @@ public interface IBaoxiaoOrderService {
     /**
      * 新增订单
      */
-    Boolean insertByBo(BaoxiaoOrderAddDto dto);
+    Boolean insertOrder(BaoxiaoOrderAddDto dto);
 
     /**
      * 修改订单
      */
-    Boolean updateByBo(BaoxiaoOrderEditDto bo);
+    Boolean updateOrder(BaoxiaoOrderEditDto bo);
+
+    /**
+     * 修改订单
+     */
+    Boolean updateByBo(BaoxiaoOrderBo bo);
 
     /**
      * 校验并批量删除订单信息
@@ -53,4 +58,9 @@ public interface IBaoxiaoOrderService {
      * 提交订单
      */
     Boolean insertOrderAudit(Long orderId);
+
+    /**
+     * 获取已审批完毕借款
+     */
+    TableDataInfo<BaoxiaoOrderVo> orderUserBorrow(Long orderId, PageQuery pageQuery);
 }
