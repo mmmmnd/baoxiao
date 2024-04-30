@@ -3,13 +3,7 @@ package com.baoxiao.app.domain.vo;
 import com.alibaba.excel.annotation.ExcelIgnoreUnannotated;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.baoxiao.common.annotation.DictFormat;
-import com.baoxiao.common.annotation.ExcelDictFormat;
-import com.baoxiao.common.convert.ExcelDictConvert;
-import com.baoxiao.common.core.validate.AddGroup;
-import com.baoxiao.common.core.validate.EditGroup;
 import lombok.Data;
-
-import javax.validation.constraints.NotBlank;
 
 
 /**
@@ -73,6 +67,12 @@ public class BaoxiaoAuditVo {
     @ExcelProperty(value = "状态")
     @DictFormat(dictDataSource = "audit_status")
     private Integer status;
+
+    /**
+     * 订单次数
+     */
+    @ExcelProperty(value = "订单次数")
+    private Integer orderNum;
 
     /**
      * 备注

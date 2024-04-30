@@ -60,6 +60,11 @@ public class BaoxiaoAuditBo extends BaseEntity {
     @NotBlank(message = "节点不能为空", groups = { AddGroup.class, EditGroup.class })
     private Integer node;
     /**
+     * 订单次数
+     */
+    @NotBlank(message = "订单次数不能为空", groups = { AddGroup.class, EditGroup.class })
+    private Integer orderNum;
+    /**
      * 状态
      */
     @NotBlank(message = "状态不能为空", groups = { AddGroup.class, EditGroup.class })

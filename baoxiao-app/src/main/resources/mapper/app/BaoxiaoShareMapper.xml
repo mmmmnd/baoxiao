@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.baoxiao.app.mapper.BaoxiaoShareMapper">
+
+    <resultMap type="com.baoxiao.app.domain.BaoxiaoShare" id="BaoxiaoShareResult">
+        <result property="shareId" column="share_id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="clientUnitId" column="client_unit_id"/>
+        <result property="clientUnitName" column="client_unit_name"/>
+        <result property="userId" column="user_id"/>
+        <result property="userName" column="user_name"/>
+        <result property="deptId" column="dept_id"/>
+        <result property="deptName" column="dept_name"/>
+        <result property="projectId" column="project_id"/>
+        <result property="projectName" column="project_name"/>
+        <result property="shareSum" column="share_sum"/>
+        <result property="hasCommissionSum" column="has_commission_sum"/>
+        <result property="commissionSum" column="commission_sum"/>
+        <result property="createTime" column="create_time"/>
+        <result property="createBy" column="create_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="updateBy" column="update_by"/>
+    </resultMap>
+
+
+</mapper>

@@ -59,8 +59,14 @@ public class BaoxiaoAudit extends BaseEntity {
      */
     private Integer status;
     /**
+     * 订单次数
+     */
+    private Integer orderNum;
+    /**
      * 备注
      */
     private String remark;
+
+
 
 }

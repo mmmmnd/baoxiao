@@ -5,8 +5,12 @@ import com.alibaba.excel.annotation.ExcelProperty;
 import com.baoxiao.app.domain.BaoxiaoCollection;
 import com.baoxiao.app.domain.BaoxiaoFee;
 import com.baoxiao.app.domain.BaoxiaoOrderFile;
+import com.baoxiao.common.annotation.DictFormat;
+import com.baoxiao.common.core.validate.AddGroup;
+import com.baoxiao.common.core.validate.EditGroup;
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
@@ -84,12 +88,14 @@ public class BaoxiaoOrderInfoVo {
     /**
      * 报销类型
      */
+    @DictFormat(dictDataSource = "order_baoxiao_type")
     @ExcelProperty(value = "报销类型")
     private Integer baoxiaoType;
 
     /**
      * 订单类型
      */
+    @DictFormat(dictDataSource = "order_type")
     @ExcelProperty(value = "报销类型")
     private Integer orderType;
 
@@ -100,9 +106,15 @@ public class BaoxiaoOrderInfoVo {
     private BigDecimal totalAmount;
 
     /**
-     * 报销金额
+     * 冲借款金额后可编辑金额
      */
-    @ExcelProperty(value = "报销金额")
+    @ExcelProperty(value = "冲借款金额后可编辑金额")
+    private BigDecimal editableTotalAmount;
+
+    /**
+     * 还款金额
+     */
+    @ExcelProperty(value = "还款金额")
     private BigDecimal repaymentSum;
 
     /**
@@ -114,12 +126,14 @@ public class BaoxiaoOrderInfoVo {
     /**
      * 部门分摊 (0末分 1已分)
      */
+    @DictFormat(dictDataSource = "order_dept_share")
     @ExcelProperty(value = "部门分摊")
     private Integer isDeptShare;
 
     /**
      * 冲借款 (0 未冲 1已冲)
      */
+    @DictFormat(dictDataSource = "order_offset_loan")
     @ExcelProperty(value = "冲借款")
     private Integer isOffsetLoan;
 
@@ -132,6 +146,7 @@ public class BaoxiaoOrderInfoVo {
     /**
      * 状态 （0显示 1隐藏）
      */
+    @DictFormat(dictDataSource = "order_status")
     @ExcelProperty(value = "状态")
     private Integer orderStatus;
 
@@ -152,6 +167,18 @@ public class BaoxiaoOrderInfoVo {
      */
     @ExcelProperty(value = "费用明细")
     private List<BaoxiaoFee> fees;
+
+    /**
+     * 出差人员
+     */
+    @ExcelProperty(value = "出差人员")
+    private String personnels;
+
+    /**
+     * 订单次数
+     */
+    @NotNull(message = "订单次数不能为空", groups = { AddGroup.class, EditGroup.class })
+    private Integer orderNum;
 
     /**
      * 收款人信息

@@ -2,14 +2,17 @@ package com.baoxiao.app.enums;
 
 public enum OrderTypeEnum {
 
-    TYPE_0(0,"报销单"),
-    TYPE_1(1,"差旅费报销单"),
-    TYPE_2(2,"借款"),
-    TYPE_3(3,"保证金"),
-    TYPE_4(4,"调整单据"),
-    TYPE_5(5,"付款申请"),
-    ;
-
+    TYPE_0(0,"普通类型"),
+    TYPE_1(1,"好活"),
+    TYPE_2(2,"合作单位报销"),
+    TYPE_3(3,"合作单位转账"),
+    TYPE_4(4,"雇主责任险"),
+    TYPE_5(5,"内部资金调拨"),
+    TYPE_6(6,"社保"),
+    TYPE_7(7,"生育津贴返还"),
+    TYPE_8(8,"工会费"),
+    TYPE_9(9,"内部转账"),
+        ;
 
     private final Integer key;
 

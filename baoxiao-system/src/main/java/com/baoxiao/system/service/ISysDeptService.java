@@ -19,6 +19,7 @@ public interface ISysDeptService {
      */
     List<SysDept> selectDeptList(SysDept dept);
 
+
     /**
      * 查询部门树结构信息
      *
@@ -50,6 +51,11 @@ public interface ISysDeptService {
      * @return 部门信息
      */
     SysDept selectDeptById(Long deptId);
+
+    /**
+     * 通过名字查询部门
+     */
+    SysDept queryDeptByName(String name);
 
     /**
      * 根据ID查询所有子部门数（正常状态）

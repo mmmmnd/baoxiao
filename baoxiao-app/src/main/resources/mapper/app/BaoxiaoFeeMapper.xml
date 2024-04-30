@@ -10,6 +10,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="baoxiaoSum" column="baoxiao_sum"/>
         <result property="taxRate" column="tax_rate"/>
         <result property="specialRicket" column="special_ricket"/>
+        <result property="departureDate" column="departure_date"/>
+        <result property="departureLocation" column="departure_location"/>
+        <result property="arrivalLocation" column="arrival_location"/>
+        <result property="returnDate" column="return_date"/>
+        <result property="numberOfPeople" column="number_of_people"/>
+        <result property="tripDays" column="trip_days"/>
+        <result property="transportation" column="transportation"/>
+        <result property="transportationFee" column="transportation_fee"/>
+        <result property="travelAllowance" column="travel_allowance"/>
+        <result property="accommodationFee" column="accommodation_fee"/>
+        <result property="transportationSubsidy" column="transportation_subsidy"/>
+        <result property="mealSubsidy" column="meal_subsidy"/>
+        <result property="otherExpenses" column="other_expenses"/>
     </resultMap>
 
 </mapper>

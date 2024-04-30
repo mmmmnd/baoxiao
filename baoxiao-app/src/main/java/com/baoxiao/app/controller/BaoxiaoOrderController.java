@@ -1,10 +1,16 @@
 package com.baoxiao.app.controller;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.json.JSONObject;
+import com.baoxiao.app.domain.dto.BaoxiaoOffsetLoanDto;
 import com.baoxiao.app.domain.dto.BaoxiaoOrderAddDto;
 import com.baoxiao.app.domain.dto.BaoxiaoOrderEditDto;
+import com.baoxiao.app.domain.dto.BaoxiaoOrderOffsetLoanDto;
 import com.baoxiao.app.domain.vo.BaoxiaoOrderInfoVo;
 import lombok.RequiredArgsConstructor;
 import javax.servlet.http.HttpServletResponse;
@@ -69,7 +75,8 @@ public class BaoxiaoOrderController extends BaseController {
     @GetMapping("/{orderId}")
     public R<BaoxiaoOrderInfoVo> getInfo(@NotNull(message = "主键不能为空")
                                      @PathVariable Long orderId) {
-        return R.ok(iBaoxiaoOrderService.queryById(orderId));
+        BaoxiaoOrderInfoVo orderInfoVo = iBaoxiaoOrderService.queryInfoById(orderId);
+        return R.ok(orderInfoVo);
     }
 
     /**
@@ -81,7 +88,7 @@ public class BaoxiaoOrderController extends BaseController {
     @RepeatSubmit()
     @PostMapping()
     public R<Void> add(@Validated(AddGroup.class) @RequestBody BaoxiaoOrderAddDto dto) {
-        return toAjax(iBaoxiaoOrderService.insertByBo(dto));
+        return toAjax(iBaoxiaoOrderService.insertOrder(dto));
     }
 
     /**
@@ -92,7 +99,7 @@ public class BaoxiaoOrderController extends BaseController {
     @RepeatSubmit()
     @PutMapping()
     public R<Void> edit(@Validated(EditGroup.class) @RequestBody BaoxiaoOrderEditDto dto) {
-        return toAjax(iBaoxiaoOrderService.updateByBo(dto));
+        return toAjax(iBaoxiaoOrderService.updateOrder(dto));
     }
 
     /**
@@ -110,14 +117,42 @@ public class BaoxiaoOrderController extends BaseController {
 
     /**
      * 提交订单
-     *
-     * @param orderId 主键
      */
     @SaCheckPermission("app:order:orderAudit")
     @Log(title = "订单提交", businessType = BusinessType.INSERT)
-    @PostMapping("/orderAudit/{orderId}")
-    public R<Void> orderAudit(@NotNull(message = "主键不能为空")
-                              @PathVariable Long orderId) {
+    @PostMapping("/orderAudit")
+    public R<Void> orderAudit(@RequestBody JSONObject jsonObject){
+        Long orderId = jsonObject.getLong("orderId");
         return toAjax(iBaoxiaoOrderService.insertOrderAudit(orderId));
     }
+
+    /**
+     * 获取已审批完毕借款
+     */
+    @SaCheckPermission("app:order:orderUserBorrow")
+    @Log(title = "订单借款", businessType = BusinessType.OTHER)
+    @GetMapping("/orderUserBorrow")
+    public TableDataInfo<BaoxiaoOrderVo> orderUserBorrow() {
+        return iBaoxiaoOrderService.orderUserBorrow();
+    }
+
+    /**
+     * 核销冲销借款
+     */
+    @SaCheckPermission("app:order:writeOffLoans")
+    @Log(title = "订单借款", businessType = BusinessType.OTHER)
+    @PostMapping("/writeOffLoans")
+    public R<Void> writeOffLoans(@RequestBody BaoxiaoOrderOffsetLoanDto dto){
+        List<BaoxiaoOffsetLoanDto> offsetLoanDto = dto.getOffsetLoans();
+
+        Long[] orderIds = offsetLoanDto.stream()
+            .map(BaoxiaoOffsetLoanDto::getOrderId)
+            .toArray(Long[]::new);
+
+        orderIds = Arrays.copyOf(orderIds, orderIds.length + 1);
+        orderIds[orderIds.length - 1] = dto.getOrderId();
+
+        return toAjax(iBaoxiaoOrderService.writeOffLoans(dto, Arrays.asList(orderIds)));
+    }
+
 }

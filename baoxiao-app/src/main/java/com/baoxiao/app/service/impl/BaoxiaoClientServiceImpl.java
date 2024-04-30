@@ -40,6 +40,18 @@ public class BaoxiaoClientServiceImpl implements IBaoxiaoClientService {
     }
 
     /**
+     * 通过名字查询客户信息
+     *
+     * @param name
+     */
+    @Override
+    public BaoxiaoClientVo queryByName(String name) {
+        LambdaQueryWrapper<BaoxiaoClient> lqw = Wrappers.lambdaQuery();
+        lqw.eq(name != null, BaoxiaoClient::getClientUnitName, name);
+        return baseMapper.selectVoOne(lqw);
+    }
+
+    /**
      * 查询客户信息列表
      */
     @Override

@@ -23,6 +23,11 @@ public interface IBaoxiaoClientService {
     BaoxiaoClientVo queryById(Long clientId);
 
     /**
+     * 通过名字查询客户信息
+     */
+    BaoxiaoClientVo queryByName(String name);
+
+    /**
      * 查询客户信息列表
      */
     TableDataInfo<BaoxiaoClientVo> queryPageList(BaoxiaoClientBo bo, PageQuery pageQuery);

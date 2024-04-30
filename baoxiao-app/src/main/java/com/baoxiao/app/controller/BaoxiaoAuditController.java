@@ -46,6 +46,9 @@ public class BaoxiaoAuditController extends BaseController {
         return iBaoxiaoAuditService.queryPageList(bo, pageQuery);
     }
 
+    /**
+     * 获取订单审批流
+     */
     @SaCheckPermission("app:audit:list")
     @GetMapping("/orderAuditList/{orderId}")
     public TableDataInfo<BaoxiaoAuditVo> orderAuditList(@NotNull(message = "订单id不能为空")
@@ -112,12 +115,12 @@ public class BaoxiaoAuditController extends BaseController {
      *
      * @param auditIds 主键串
      */
-    @SaCheckPermission("app:audit:remove")
-    @Log(title = "审批流", businessType = BusinessType.DELETE)
-    @DeleteMapping("/{auditIds}")
-    public R<Void> remove(@NotEmpty(message = "主键不能为空")
-                          @PathVariable Long[] auditIds) {
-        return toAjax(iBaoxiaoAuditService.deleteWithValidByIds(Arrays.asList(auditIds), true));
-    }
+//    @SaCheckPermission("app:audit:remove")
+//    @Log(title = "审批流", businessType = BusinessType.DELETE)
+//    @DeleteMapping("/{auditIds}")
+//    public R<Void> remove(@NotEmpty(message = "主键不能为空")
+//                          @PathVariable Long[] auditIds) {
+//        return toAjax(iBaoxiaoAuditService.deleteWithValidByIds(Arrays.asList(auditIds), true));
+//    }
 
 }

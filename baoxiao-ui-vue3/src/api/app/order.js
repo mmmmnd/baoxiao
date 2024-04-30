@@ -69,10 +69,26 @@ export function delOrderFile (fileId) {
 }
 
 /*提交*/
-export function orderAudit (orderId) {
+export function orderAudit (data) {
   return request({
-    url: '/app/order/orderAudit/' + orderId,
-    method: 'delete'
+    url: '/app/order/orderAudit',
+    method: 'post',
+    data: data
+  })
+}
+
+// 获取已审批完毕借款
+export function orderUserBorrow () {
+  return request({
+    url: '/app/order/orderUserBorrow',
+    method: 'get',
+  })
+}
+export function orderWriteOffLoans (data) {
+  return request({
+    url: '/app/order/writeOffLoans',
+    method: 'post',
+    data: data
   })
 }
 

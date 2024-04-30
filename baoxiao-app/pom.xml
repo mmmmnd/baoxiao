@@ -22,6 +22,10 @@
         <groupId>com.baoxiao</groupId>
         <artifactId>baoxiao-system</artifactId>
       </dependency>
+        <dependency>
+            <groupId>com.baoxiao</groupId>
+            <artifactId>baoxiao-framework</artifactId>
+        </dependency>
     </dependencies>
 
     <properties>

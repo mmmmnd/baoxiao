@@ -46,28 +46,22 @@ public class BaoxiaoOrderBo extends BaseEntity {
     private Date orderDate;
 
     /**
+     * 订单次数
+     */
+    @NotNull(message = "订单次数不能为空", groups = { AddGroup.class, EditGroup.class })
+    private Integer orderNum;
+
+    /**
      * 报销类型
      */
     @NotNull(message = "报销类型不能为空", groups = { AddGroup.class, EditGroup.class })
     private Integer baoxiaoType;
 
     /**
-     * 报销金额
-     */
-    @NotNull(message = "报销金额不能为空", groups = { AddGroup.class, EditGroup.class })
-    private BigDecimal repaymentSum;
-
-    /**
-     * 支付金额
-     */
-    @NotNull(message = "支付金额不能为空", groups = { AddGroup.class, EditGroup.class })
-    private BigDecimal paymentSum;
-
-    /**
-     * 冲借款金额
+     * 冲借款金额后可编辑金额
      */
     @NotNull(message = "冲借款金额不能为空", groups = { AddGroup.class, EditGroup.class })
-    private BigDecimal offsetLoanSum;
+    private BigDecimal editableTotalAmount;
 
     /**
      * 金额合计
@@ -146,6 +140,12 @@ public class BaoxiaoOrderBo extends BaseEntity {
      */
     @NotNull(message = "客户id不能为空", groups = { AddGroup.class, EditGroup.class })
     private Long clientId;
+
+    /**
+     * 出差人员
+     */
+    @NotBlank(message = "出差人员为空", groups = { AddGroup.class, EditGroup.class })
+    private String personnels;
 
     /**
      * 事由

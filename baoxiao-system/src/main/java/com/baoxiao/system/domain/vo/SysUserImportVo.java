@@ -21,12 +21,6 @@ public class SysUserImportVo implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 用户ID
-     */
-    @ExcelProperty(value = "用户序号")
-    private Long userId;
-
-    /**
      * 部门ID
      */
     @ExcelProperty(value = "部门编号")
@@ -66,7 +60,7 @@ public class SysUserImportVo implements Serializable {
     /**
      * 帐号状态（0正常 1停用）
      */
-    @ExcelProperty(value = "帐号状态", converter = ExcelDictConvert.class)
+    @ExcelProperty(value = "帐号状态（0正常 1停用）", converter = ExcelDictConvert.class)
     @ExcelDictFormat(dictType = "sys_normal_disable")
     private String status;
 

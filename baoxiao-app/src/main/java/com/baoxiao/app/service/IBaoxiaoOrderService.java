@@ -2,6 +2,7 @@ package com.baoxiao.app.service;
 
 import com.baoxiao.app.domain.dto.BaoxiaoOrderAddDto;
 import com.baoxiao.app.domain.dto.BaoxiaoOrderEditDto;
+import com.baoxiao.app.domain.dto.BaoxiaoOrderOffsetLoanDto;
 import com.baoxiao.app.domain.vo.BaoxiaoOrderInfoVo;
 import com.baoxiao.app.domain.vo.BaoxiaoOrderVo;
 import com.baoxiao.app.domain.bo.BaoxiaoOrderBo;
@@ -22,7 +23,12 @@ public interface IBaoxiaoOrderService {
     /**
      * 查询订单
      */
-    BaoxiaoOrderInfoVo queryById(Long orderId);
+    BaoxiaoOrderInfoVo queryInfoById(Long orderId);
+
+    /**
+     * 通过订单id查找
+     */
+    BaoxiaoOrderVo queryById(Long orderId);
 
     /**
      * 查询订单列表
@@ -37,12 +43,17 @@ public interface IBaoxiaoOrderService {
     /**
      * 新增订单
      */
-    Boolean insertByBo(BaoxiaoOrderAddDto dto);
+    Boolean insertOrder(BaoxiaoOrderAddDto dto);
 
     /**
      * 修改订单
      */
-    Boolean updateByBo(BaoxiaoOrderEditDto bo);
+    Boolean updateOrder(BaoxiaoOrderEditDto bo);
+
+    /**
+     * 修改订单
+     */
+    Boolean updateByBo(BaoxiaoOrderBo bo);
 
     /**
      * 校验并批量删除订单信息
@@ -53,4 +64,14 @@ public interface IBaoxiaoOrderService {
      * 提交订单
      */
     Boolean insertOrderAudit(Long orderId);
+
+    /**
+     * 获取已审批完毕借款
+     */
+    TableDataInfo<BaoxiaoOrderVo> orderUserBorrow();
+
+    /**
+     * 核销冲销借款
+     */
+    Boolean writeOffLoans(BaoxiaoOrderOffsetLoanDto dto,Collection<Long> ids);
 }

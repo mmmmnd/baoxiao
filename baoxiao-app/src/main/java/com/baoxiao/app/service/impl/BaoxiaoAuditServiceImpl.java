@@ -1,16 +1,19 @@
 package com.baoxiao.app.service.impl;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baoxiao.app.domain.bo.BaoxiaoOrderBo;
 import com.baoxiao.app.domain.dto.BaoxiaoAuditEditDto;
+import com.baoxiao.app.domain.vo.BaoxiaoOrderInfoVo;
+import com.baoxiao.app.domain.vo.BaoxiaoOrderVo;
 import com.baoxiao.app.enums.AuditTypeEnum;
+import com.baoxiao.app.enums.OrderStatusEnum;
 import com.baoxiao.common.core.domain.entity.SysDept;
-import com.baoxiao.common.core.domain.model.LoginUser;
 import com.baoxiao.common.core.page.TableDataInfo;
 import com.baoxiao.common.core.domain.PageQuery;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.baoxiao.common.helper.LoginHelper;
+import com.baoxiao.common.utils.spring.SpringUtils;
 import com.baoxiao.system.service.impl.SysDeptServiceImpl;
 import com.baoxiao.system.service.impl.SysPostServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +41,7 @@ public class BaoxiaoAuditServiceImpl implements IBaoxiaoAuditService {
     private final SysDeptServiceImpl sysDeptService;
 
     private final SysPostServiceImpl sysPostService;
+
     /**
      * 查询审批流
      */
@@ -77,8 +81,10 @@ public class BaoxiaoAuditServiceImpl implements IBaoxiaoAuditService {
     @Override
     public Boolean insertByBo(Long orderId, Long deptId) {
         Integer index = 0;
-        SysDept sysDept = sysDeptService.selectDeptById(deptId);
         List<BaoxiaoAudit> list = new ArrayList<>();
+        SysDept sysDept = sysDeptService.selectDeptById(deptId);
+        BaoxiaoOrderServiceImpl orderService = SpringUtils.getBean(BaoxiaoOrderServiceImpl.class);
+        BaoxiaoOrderVo orderVo = orderService.queryById(orderId);
 
         do {
             String position = sysPostService.selectPostByUserId(sysDept.getUserId());
@@ -88,8 +94,9 @@ public class BaoxiaoAuditServiceImpl implements IBaoxiaoAuditService {
                 .userId(sysDept.getUserId())
                 .userName(sysDept.getLeader())
                 .activeNode(0)
-                .node(index++)
+                .node(++index)
                 .position(position)
+                .orderNum(orderVo.getOrderNum())
                 .status(0)
                 .remark("")
                 .build();
@@ -105,8 +112,9 @@ public class BaoxiaoAuditServiceImpl implements IBaoxiaoAuditService {
                             .userId(sysDept.getUserId())
                             .userName(sysDept.getLeader())
                             .activeNode(0)
-                            .node(index++)
+                            .node(++index)
                             .position(position)
+                            .orderNum(orderVo.getOrderNum())
                             .status(0)
                             .remark("")
                             .build());
@@ -132,6 +140,11 @@ public class BaoxiaoAuditServiceImpl implements IBaoxiaoAuditService {
         audit.setRemark(dto.getRemark());
 
         AuditTypeEnum byCode = AuditTypeEnum.getByCode(dto.getStatus());
+        BaoxiaoOrderServiceImpl orderService = SpringUtils.getBean(BaoxiaoOrderServiceImpl.class);
+        BaoxiaoOrderBo orderBo = new BaoxiaoOrderBo();
+        orderBo.setOrderId(audit.getOrderId());
+
+        /*同意*/
         if (Objects.requireNonNull(byCode) == AuditTypeEnum.TYPE_1) {
             audit.setStatus(AuditTypeEnum.TYPE_1.getKey());
 
@@ -141,16 +154,26 @@ public class BaoxiaoAuditServiceImpl implements IBaoxiaoAuditService {
 
                 /*查找下一个审批节点置换为当前审批*/
                 LambdaQueryWrapper<BaoxiaoAudit> lqw = Wrappers.lambdaQuery();
+                lqw.eq(BaoxiaoAudit::getOrderId, audit.getOrderId());
+                lqw.eq(BaoxiaoAudit::getNode, audit.getNode()+1);
+                lqw.eq(BaoxiaoAudit::getOrderNum, audit.getOrderNum());
 
-                lqw.eq(BaoxiaoAudit::getNode, audit.getNode() + 1);
                 audit = baseMapper.selectOne(lqw);
                 audit.setActiveNode(AuditTypeEnum.TYPE_4.getKey());
-            }
 
+                /*修改为正在审批*/
+                orderBo.setOrderStatus(OrderStatusEnum.status_4.getKey());
+            }else{
+                /*修改为正在审批*/
+                orderBo.setOrderStatus(OrderStatusEnum.status_5.getKey());
+            }
+        /*驳回*/
         } else if (byCode == AuditTypeEnum.TYPE_2) {
             audit.setStatus(AuditTypeEnum.TYPE_2.getKey());
+            orderBo.setOrderStatus(OrderStatusEnum.status_6.getKey());
         }
 
+        orderService.updateByBo(orderBo);
         return baseMapper.updateById(audit) > 0;
     }
 
@@ -189,8 +212,12 @@ public class BaoxiaoAuditServiceImpl implements IBaoxiaoAuditService {
      */
     @Override
     public TableDataInfo<BaoxiaoAuditVo> queryOrderAuditList(Long orderId) {
+        BaoxiaoOrderServiceImpl orderService = SpringUtils.getBean(BaoxiaoOrderServiceImpl.class);
+        BaoxiaoOrderVo orderVo = orderService.queryById(orderId);
+
         LambdaQueryWrapper<BaoxiaoAudit> lqw = Wrappers.lambdaQuery();
         lqw.eq(BaoxiaoAudit::getOrderId,orderId);
+        lqw.eq(BaoxiaoAudit::getOrderNum,orderVo.getOrderNum());
         List<BaoxiaoAuditVo> baoxiaoAuditVos = baseMapper.selectVoList(lqw);
 
         return TableDataInfo.build(baoxiaoAuditVos);

@@ -35,8 +35,12 @@ public class BaoxiaoOrderEditDto {
     @NotNull(message = "报销部门名称不能为空", groups = {EditGroup.class})
     private String deptName;
 
-    @NotNull(message = "金额合计不能为空", groups = { EditGroup.class })
+    @NotNull(message = "金额合计不能为空", groups = {EditGroup.class })
     private BigDecimal totalAmount;
+
+    private BigDecimal editableTotalAmount;
+
+    private String personnels;
 
     private String remark;
 

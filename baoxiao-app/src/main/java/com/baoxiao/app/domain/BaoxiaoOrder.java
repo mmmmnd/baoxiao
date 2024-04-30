@@ -41,25 +41,21 @@ public class BaoxiaoOrder extends BaseEntity {
      */
     private Date orderDate;
     /**
+     * 订单次数
+     */
+    private Integer orderNum;
+    /**
      * 报销类型
      */
     private Integer baoxiaoType;
     /**
-     * 报销金额
-     */
-    private BigDecimal repaymentSum;
-    /**
-     * 支付金额
-     */
-    private BigDecimal paymentSum;
-    /**
-     * 冲借款金额
-     */
-    private BigDecimal offsetLoanSum;
-    /**
      * 金额合计
      */
     private BigDecimal totalAmount;
+    /**
+     * 冲借款金额后可编辑金额
+     */
+    private BigDecimal editableTotalAmount;
     /**
      * 收款人
      */
@@ -112,6 +108,10 @@ public class BaoxiaoOrder extends BaseEntity {
      * 客户id
      */
     private Long clientId;
+    /**
+     * 出差人员
+     */
+    private String personnels;
     /**
      * 事由
      */

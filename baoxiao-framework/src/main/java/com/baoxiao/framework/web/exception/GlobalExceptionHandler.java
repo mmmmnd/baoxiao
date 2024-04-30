@@ -13,17 +13,24 @@ import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.MyBatisSystemException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.ObjectError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * 全局异常处理器
@@ -163,22 +170,22 @@ public class GlobalExceptionHandler {
     /**
      * 自定义验证异常
      */
-    @ExceptionHandler(ConstraintViolationException.class)
-    public R<Void> constraintViolationException(ConstraintViolationException e) {
-        log.error(e.getMessage(), e);
-        String message = StreamUtils.join(e.getConstraintViolations(), ConstraintViolation::getMessage, ", ");
-        return R.fail(message);
-    }
+//    @ExceptionHandler(ConstraintViolationException.class)
+//    public R<Void> constraintViolationException(ConstraintViolationException e) {
+//        log.error(e.getMessage(), e);
+//        String message = StreamUtils.join(e.getConstraintViolations(), ConstraintViolation::getMessage, ", ");
+//        return R.fail(message);
+//    }
 
     /**
      * 自定义验证异常
      */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public R<Void> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        log.error(e.getMessage(), e);
-        String message = e.getBindingResult().getFieldError().getDefaultMessage();
-        return R.fail(message);
-    }
+//    @ExceptionHandler(MethodArgumentNotValidException.class)
+//    public R<Void> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+//        log.error(e.getMessage(), e);
+//        String message = e.getBindingResult().getFieldError().getDefaultMessage();
+//        return R.fail(message);
+//    }
 
     /**
      * 演示模式异常
@@ -186,5 +193,93 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DemoModeException.class)
     public R<Void> handleDemoModeException(DemoModeException e) {
         return R.fail("演示模式，不允许操作");
+    }
+
+    /**
+     * 校验单个数据错误
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseBody
+    public R<Void> handleConstraintViolationException(ConstraintViolationException e) {
+        log.error("handle Constraint Violation Exception", e);
+
+        return handleParamResponse(e.getConstraintViolations());
+    }
+
+    /**
+     * 自定义验证异常
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseBody
+    public R<Void> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        log.error("Method Argument NotValid Exception", e);
+
+        return handleDTOResponse(e.getBindingResult());
+    }
+
+    /*开发时使用*/
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseBody
+    public R<Void> handleInvalidFormatException(HttpMessageNotReadableException e) {
+        log.error("handle Invalid Format Exception", e);
+
+        return handleInvalidFormat(e.getCause());
+    }
+
+    /**
+     * 校验DTO数据错误
+     *
+     * @param bindingResult 错误数组
+     * @return 返回响应类型
+     */
+    private R<Void> handleDTOResponse(BindingResult bindingResult) {
+        ArrayList<String> list = new ArrayList<>();
+
+        if (bindingResult.hasErrors()) {
+            /*获取错误的数组*/
+            List<ObjectError> errors = bindingResult.getAllErrors();
+
+            for (ObjectError error : errors) {
+                list.add(error.getDefaultMessage());
+            }
+        }
+
+        if (list.size() == 0) {
+            return R.fail(HttpStatus.HTTP_INTERNAL_ERROR,"参数错误");
+        }
+
+        return R.fail(HttpStatus.HTTP_INTERNAL_ERROR, list.toString());
+    }
+
+    /**
+     * 校验单个数据错误
+     *
+     * @param constraintViolations 错误数组
+     * @return 返回响应类型
+     */
+    private R<Void> handleParamResponse(Set<ConstraintViolation<?>> constraintViolations) {
+        ArrayList<String> list = new ArrayList<>();
+
+        if (constraintViolations.size() > 0) {
+            for (ConstraintViolation<?> ConstraintViolation : constraintViolations) {
+                list.add(ConstraintViolation.getMessage());
+            }
+        }
+
+        if (list.size() == 0) {
+            return R.fail(HttpStatus.HTTP_INTERNAL_ERROR,"参数错误");
+        }
+
+        return R.fail(HttpStatus.HTTP_INTERNAL_ERROR, list.toString());
+    }
+
+    /**
+     * 参数格式错误(开发时使用)
+     *
+     * @param cause 错误对象
+     * @return 返回枚举错误类型
+     */
+    private R<Void> handleInvalidFormat(Throwable cause) {
+        return R.fail(HttpStatus.HTTP_INTERNAL_ERROR, cause.getMessage());
     }
 }

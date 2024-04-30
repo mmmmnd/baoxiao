@@ -4,8 +4,10 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baoxiao.app.constant.ConfigConstants;
 import com.baoxiao.app.constant.BaoxiaoConstants;
-import com.baoxiao.app.enums.OrderStatusEnum;
-import com.baoxiao.app.enums.OrderTypeEnum;
+import com.baoxiao.app.domain.bo.BaoxiaoOrderSumBo;
+import com.baoxiao.app.domain.dto.BaoxiaoOffsetLoanDto;
+import com.baoxiao.app.domain.dto.BaoxiaoOrderOffsetLoanDto;
+import com.baoxiao.app.enums.*;
 import com.baoxiao.app.domain.BaoxiaoCollection;
 import com.baoxiao.app.domain.BaoxiaoFee;
 import com.baoxiao.app.domain.dto.BaoxiaoOrderAddDto;
@@ -57,13 +59,24 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
 
     private final BaoxiaoAuditServiceImpl baoxiaoAuditService;
 
+    private final BaoxiaoOrderSumServiceImpl baoxiaoOrderSumService;
+
+
     /**
      * 查询订单
      */
     @Override
     @Cacheable(cacheNames = BaoxiaoConstants.BAOXIAO_ORDER_ORDER_ID, key = "#orderId", condition = "#orderId != null")
-    public BaoxiaoOrderInfoVo queryById(Long orderId){
+    public BaoxiaoOrderInfoVo queryInfoById(Long orderId){
         return baseMapper.selectOrderInfoById(orderId);
+    }
+
+    /**
+     * 通过订单id查找
+     */
+    @Override
+    public BaoxiaoOrderVo queryById(Long orderId) {
+        return baseMapper.selectVoById(orderId);
     }
 
     /**
@@ -92,9 +105,6 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
         lqw.eq(bo.getOrderType() != null, BaoxiaoOrder::getOrderType, bo.getOrderType());
         lqw.eq(bo.getOrderDate() != null, BaoxiaoOrder::getOrderDate, bo.getOrderDate());
         lqw.eq(bo.getBaoxiaoType() != null, BaoxiaoOrder::getBaoxiaoType, bo.getBaoxiaoType());
-        lqw.eq(bo.getRepaymentSum() != null, BaoxiaoOrder::getRepaymentSum, bo.getRepaymentSum());
-        lqw.eq(bo.getPaymentSum() != null, BaoxiaoOrder::getPaymentSum, bo.getPaymentSum());
-        lqw.eq(bo.getOffsetLoanSum() != null, BaoxiaoOrder::getOffsetLoanSum, bo.getOffsetLoanSum());
         lqw.eq(bo.getTotalAmount() != null, BaoxiaoOrder::getTotalAmount, bo.getTotalAmount());
         lqw.eq(bo.getCollectionId() != null, BaoxiaoOrder::getCollectionId, bo.getCollectionId());
         lqw.eq(bo.getIsOffsetLoan() != null, BaoxiaoOrder::getIsOffsetLoan, bo.getIsOffsetLoan());
@@ -106,6 +116,8 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
         lqw.eq(bo.getCompanyId() != null, BaoxiaoOrder::getCompanyId, bo.getCompanyId());
         lqw.eq(bo.getClientId() != null, BaoxiaoOrder::getClientId, bo.getClientId());
         lqw.eq(bo.getAuditId() != null, BaoxiaoOrder::getAuditId, bo.getAuditId());
+        lqw.orderByDesc(BaoxiaoOrder::getOrderId);
+
         return lqw;
     }
 
@@ -114,34 +126,55 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean insertByBo(BaoxiaoOrderAddDto dto) {
+    public Boolean insertOrder(BaoxiaoOrderAddDto dto) {
+        BigDecimal baoxiaoSum = BigDecimal.ZERO;
+        Long feeId = IdWorker.getId();
+        Long collectionId = IdWorker.getId();
+        List<BaoxiaoFee> fees = dto.getFees();
+        List<BaoxiaoCollection> collections = dto.getCollections();
+
         LoginUser loginUser = LoginHelper.getLoginUser();
         BaoxiaoOrder order = BeanUtil.toBean(dto, BaoxiaoOrder.class);
-
-        /*批量添加费用明细*/
-        Long feeId = IdWorker.getId();
-        List<BaoxiaoFee> fees = dto.getFees();
-        fees.forEach(fee -> fee.setFeeId(feeId));
-        baoxiaoFeeService.batchInsertByList(fees);
-
-        /*批量添加收款人信息*/
-        Long collectionId = IdWorker.getId();
-        List<BaoxiaoCollection> collections = dto.getCollections();
-        collections.forEach(collection -> {
-            collection.setCollectionId(collectionId);
-            if(order.getBaoxiaoType().equals(OrderTypeEnum.TYPE_2.getKey()) && collection.getCollectionSum() == null){
-                collection.setCollectionSum(BigDecimal.ZERO);
-            }
-        });
-        baoxiaoCollectionService.batchInsertByList(collections);
+        BaoxiaoTypeEnum type = BaoxiaoTypeEnum.fromKey(dto.getBaoxiaoType());
 
         /*如果订单类型为空则为普通报销单*/
         if(order.getOrderType() == null){
-            order.setOrderType(0);
+            order.setOrderType(OrderTypeEnum.TYPE_0.getKey());
         }
 
-        String baoxiaoType = String.valueOf(dto.getBaoxiaoType());
+        /*出差人数不存在则为 “” */
+        if(order.getPersonnels() == null){
+            order.setPersonnels("");
+        }
 
+        /*批量添加收款人信息*/
+        if (order.getBaoxiaoType() != BaoxiaoTypeEnum.TYPE_4.getKey()) {
+            collections.forEach(collection -> {
+                collection.setCollectionId(collectionId);
+                if (order.getBaoxiaoType() == BaoxiaoTypeEnum.TYPE_2.getKey()) {
+                    collection.setCollectionSum(BigDecimal.ZERO);
+                }
+            });
+            baoxiaoCollectionService.batchInsertByList(collections);
+        }
+
+        /*批量添加费用明细*/
+        if (Arrays.asList(BaoxiaoTypeEnum.TYPE_0, BaoxiaoTypeEnum.TYPE_1, BaoxiaoTypeEnum.TYPE_4).contains(type)) {
+            baoxiaoSum = fees.stream()
+                .peek(fee -> fee.setFeeId(feeId))
+                .map(BaoxiaoFee::getBaoxiaoSum)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            baoxiaoFeeService.batchInsertByList(fees);
+        }
+
+        /*设置订单的收款人ID、费用明细ID和总金额*/
+        order.setCollectionId(order.getBaoxiaoType() != BaoxiaoTypeEnum.TYPE_4.getKey() ? collectionId : 0L);
+        order.setFeeId((Arrays.asList(BaoxiaoTypeEnum.TYPE_2, BaoxiaoTypeEnum.TYPE_3, BaoxiaoTypeEnum.TYPE_5).contains(type)) ? 0L : feeId);
+
+        order.setEditableTotalAmount(order.getBaoxiaoType() == BaoxiaoTypeEnum.TYPE_2.getKey() ? order.getTotalAmount() : baoxiaoSum);
+        order.setTotalAmount((Arrays.asList(BaoxiaoTypeEnum.TYPE_3, BaoxiaoTypeEnum.TYPE_5).contains(type) ? order.getTotalAmount() : baoxiaoSum));
+
+        String baoxiaoType = String.valueOf(dto.getBaoxiaoType());
         String userIdStr = String.valueOf(loginUser.getUserId());
         userIdStr = ConfigConstants.USER_ID_LENGTH == userIdStr.length()
             ?userIdStr
@@ -160,19 +193,15 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
         /*时间戳 + 业务类型 + 递增的数值 + 类用户ID*/
         Long orderNumber = Long.valueOf( DateUtils.getTimestamp(true) + baoxiaoType + atomicId + userId);
 
+        order.setOrderNum(0);
         order.setOrderNumber(orderNumber);
         order.setUserName(loginUser.getUsername());
         order.setUserId(loginUser.getUserId());
         order.setOrderDate(DateUtils.getNowDate());
-        order.setRepaymentSum(BigDecimal.ZERO);
-        order.setPaymentSum(BigDecimal.ZERO);
-        order.setOffsetLoanSum(BigDecimal.ZERO);
-        order.setIsOffsetLoan(0);
-        order.setIsDeptShare(0);
+        order.setIsOffsetLoan(OffsetLoanEnum.TYPE_0.getKey());
+        order.setIsDeptShare(DeptShareEnum.TYPE_0.getKey());
         order.setOrderStatus(0);
         order.setAuditId(0L);
-        order.setFeeId(feeId);
-        order.setCollectionId(collectionId);
 
         /* 插入订单数据获取id */
         boolean flag = baseMapper.insert(order) > 0;
@@ -191,20 +220,25 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(cacheNames = BaoxiaoConstants.BAOXIAO_ORDER_ORDER_ID, key = "#orderId", condition = "#orderId != null")
-    public Boolean updateByBo(BaoxiaoOrderEditDto dto) {
+    @CacheEvict(cacheNames = BaoxiaoConstants.BAOXIAO_ORDER_ORDER_ID, key = "#dto.getOrderId", condition = "#dto.getOrderId != null")
+    public Boolean updateOrder(BaoxiaoOrderEditDto dto) {
+        BigDecimal baoxiaoSum = BigDecimal.ZERO;
         BaoxiaoOrder order = BeanUtil.toBean(dto, BaoxiaoOrder.class);
         BaoxiaoOrder baoxiaoOrder = baseMapper.selectById(order.getOrderId());
+        Integer baoxiaoType = baoxiaoOrder.getBaoxiaoType();
 
         if(baoxiaoOrder.getDelFlag() == 2){
             throw new RuntimeException("订单不存在！");
         }
+
         /*删除旧费用明细*/
-        List<Long> feeIds = Collections.singletonList(baoxiaoOrder.getFeeId());
+        Long feeId = baoxiaoOrder.getFeeId();
+        List<Long> feeIds = Collections.singletonList(feeId);
         baoxiaoFeeService.deleteWithValidByIds(feeIds, false);
 
         /*删除收款人信息*/
-        List<Long> collectionIds = Collections.singletonList(baoxiaoOrder.getCollectionId());
+        Long collectionId = baoxiaoOrder.getCollectionId();
+        List<Long> collectionIds = Collections.singletonList(collectionId);
         baoxiaoCollectionService.deleteWithValidByIds(collectionIds, false);
 
         /**
@@ -215,16 +249,37 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
 
         /*批量添加费用明细*/
         List<BaoxiaoFee> fees = dto.getFees();
-        fees.forEach(fee -> fee.setFeeId(baoxiaoOrder.getFeeId()));
+        baoxiaoSum = fees.stream()
+            .peek(fee -> fee.setFeeId(feeId))
+            .map(BaoxiaoFee::getBaoxiaoSum)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        order.setTotalAmount(baoxiaoSum);
+        order.setEditableTotalAmount(baoxiaoSum);
         baoxiaoFeeService.batchInsertByList(fees);
 
         /*批量添加收款人信息*/
         List<BaoxiaoCollection> collections = dto.getCollections();
-        collections.forEach(collection -> collection.setCollectionId(baoxiaoOrder.getCollectionId()));
+        collections.forEach(collection -> {
+            collection.setCollectionId(collectionId);
+            if(baoxiaoType == 2){
+                collection.setCollectionSum(BigDecimal.ZERO);
+            }
+        });
         baoxiaoCollectionService.batchInsertByList(collections);
 
-
         return baseMapper.updateById(order) > 0;
+    }
+
+    /**
+     * 修改订单
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(cacheNames = BaoxiaoConstants.BAOXIAO_ORDER_ORDER_ID, key = "#bo.getOrderId", condition = "#bo.getOrderId != null")
+    public Boolean updateByBo(BaoxiaoOrderBo bo) {
+        BaoxiaoOrder update = BeanUtil.toBean(bo, BaoxiaoOrder.class);
+        validEntityBeforeSave(update);
+        return baseMapper.updateById(update) > 0;
     }
 
     /**
@@ -255,6 +310,7 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
     @Transactional(rollbackFor = Exception.class)
     public Boolean insertOrderAudit(Long orderId) {
         BaoxiaoOrder order = baseMapper.selectById(orderId);
+        order.setOrderNum(order.getOrderNum()+1);
         order.setOrderStatus(OrderStatusEnum.status_3.getKey());
 
         /*生成审批流*/
@@ -262,6 +318,90 @@ public class BaoxiaoOrderServiceImpl implements IBaoxiaoOrderService {
         return baseMapper.updateById(order) > 0;
     }
 
+    /**
+     * 获取已审批完毕借款
+     */
+    @Override
+    public TableDataInfo<BaoxiaoOrderVo> orderUserBorrow() {
+        LambdaQueryWrapper<BaoxiaoOrder> eq = Wrappers.<BaoxiaoOrder>lambdaQuery()
+            .gt(BaoxiaoOrder::getTotalAmount, 0)
+            .eq(BaoxiaoOrder::getBaoxiaoType, BaoxiaoTypeEnum.TYPE_2.getKey())
+            .eq(BaoxiaoOrder::getOrderStatus, OrderStatusEnum.status_5.getKey());
 
-    /*获取个人借款金额*/
+        List<BaoxiaoOrderVo> result = baseMapper.selectVoList(eq);
+        return TableDataInfo.build(result);
+    }
+
+    /**
+     * 核销冲销借款
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @CacheBatchEvict(value = BaoxiaoConstants.BAOXIAO_ORDER_ORDER_ID, key = "#ids" )
+    public Boolean writeOffLoans(BaoxiaoOrderOffsetLoanDto dto, Collection<Long> ids) {
+        BaoxiaoOrderVo orderVo = queryById(dto.getOrderId());
+        BaoxiaoOrderBo orderBo = BeanUtil.toBean(orderVo, BaoxiaoOrderBo.class);
+
+        List<BaoxiaoOffsetLoanDto> offsetLoanDto = dto.getOffsetLoans();
+        BigDecimal offsetLoanSum = offsetLoanDto.stream()
+            .map(item -> {
+                BaoxiaoOrderVo offsetLoanVo = queryById(item.getOrderId());
+                BaoxiaoOrderBo offsetLoanBo = BeanUtil.toBean(offsetLoanVo, BaoxiaoOrderBo.class);
+
+                int compareTo = item.getOffsetLoanSum().compareTo(offsetLoanBo.getEditableTotalAmount());
+                if (compareTo == 1) {
+                    throw new RuntimeException("冲销金额不能大于剩余金额！");
+                }
+
+                //剩余金额减去冲借款金额
+                BigDecimal sum = offsetLoanBo.getEditableTotalAmount().subtract(item.getOffsetLoanSum());
+
+                offsetLoanBo.setEditableTotalAmount(sum);
+                offsetLoanBo.setIsOffsetLoan(OffsetLoanEnum.TYPE_1.getKey());
+
+                updateByBo(offsetLoanBo);
+
+                BaoxiaoOrderSumBo offLoanOrderSumBo = new BaoxiaoOrderSumBo();
+
+                if (compareTo > 0){
+                    offLoanOrderSumBo.setPaymentSum(sum);
+                    offLoanOrderSumBo.setRepaymentSum(BigDecimal.ZERO);
+                } else {
+                    offLoanOrderSumBo.setPaymentSum(BigDecimal.ZERO);
+                    offLoanOrderSumBo.setRepaymentSum(sum);
+                }
+
+                offLoanOrderSumBo.setPaymentSum(sum);
+                offLoanOrderSumBo.setOrderId(orderBo.getOrderId());
+                offLoanOrderSumBo.setOffsetLoanSum(item.getOffsetLoanSum());
+
+                baoxiaoOrderSumService.insertByBo(offLoanOrderSumBo);
+
+                return item.getOffsetLoanSum();
+            })
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal sum = orderBo.getTotalAmount().subtract(offsetLoanSum);
+        int compareTo = sum.compareTo(BigDecimal.ZERO);
+
+        orderBo.setEditableTotalAmount(sum);
+        orderBo.setIsOffsetLoan(OffsetLoanEnum.TYPE_1.getKey());
+        orderBo.setOrderStatus(OrderStatusEnum.status_1.getKey());
+
+        BaoxiaoOrderSumBo orderSumBo = new BaoxiaoOrderSumBo();
+        orderSumBo.setOrderId(orderBo.getOrderId());
+        orderSumBo.setOffsetLoanSum(offsetLoanSum);
+
+        if (compareTo > 0){
+            orderSumBo.setPaymentSum(sum);
+            orderSumBo.setRepaymentSum(BigDecimal.ZERO);
+        } else {
+            orderSumBo.setPaymentSum(BigDecimal.ZERO);
+            orderSumBo.setRepaymentSum(sum);
+        }
+
+        baoxiaoOrderSumService.insertByBo(orderSumBo);
+
+        return updateByBo(orderBo);
+    }
 }

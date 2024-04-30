@@ -12,11 +12,10 @@
       <el-form-item label="制单人" prop="userId">
         <el-input v-model="queryParams.userId" placeholder="请输入制单人id" clearable @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="申请人" prop="baoxiaoUserId">
-        <el-input v-model="queryParams.baoxiaoUserId" placeholder="请输入申请人id" clearable @keyup.enter="handleQuery" />
-      </el-form-item>
-      <el-form-item label="申请公司" prop="companyId">
-        <el-input v-model="queryParams.companyId" placeholder="请输入申请公司id" clearable @keyup.enter="handleQuery" />
+      <el-form-item label="报销类型" prop="baoxiaoType">
+        <el-select v-model="queryParams.baoxiaoType" placehol0der="订单类型" clearable style="width: 240px">
+          <el-option v-for="dict in order_baoxiao_type" :key="dict.value" :label="dict.label" :value="dict.value"/>
+        </el-select>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
@@ -79,22 +78,23 @@
       <el-table-column label="申请类型" align="center" prop="baoxiaoTypeName" />
       <el-table-column label="冲借款" align="center" prop="isOffsetLoanName" />
       <el-table-column label="部门分摊" align="center" prop="isDeptShareName" />
-      <el-table-column label="状态 " align="center" prop="orderStatus" />
+      <el-table-column label="状态 " align="center" prop="orderStatusName" />
       <el-table-column label="制单人" align="center" prop="userName" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button link type="primary" icon="CreditCard" @click="handleOffsetLoan(scope.row)"
-                     v-hasPermi="['app:order:remove']">冲借款</el-button>
+                     v-hasPermi="['app:order:remove']" :disabled="scope.row.orderStatus != 0 || scope.row.baoxiaoType == 2 || scope.row.isOffsetLoan == 1 || scope.row.isDeptShare == 1">冲借款</el-button>
           <el-button link type="primary" icon="Coin" @click="handleShare(scope.row)"
-                     v-hasPermi="['app:order:remove']">分摊</el-button>
-          <el-button link type="primary" icon="Coin" @click="handleShare(scope.row)"
-                     v-hasPermi="['app:order:remove']">提交</el-button>
+                     v-hasPermi="['app:order:remove']" :disabled="scope.row.orderStatus != 0 || scope.row.baoxiaoType == 2 || scope.row.isOffsetLoan == 1 || scope.row.isDeptShare == 1">分摊</el-button>
           <el-button link type="primary" icon="Tickets" @click="handleAudit(scope.row)"
-                     v-hasPermi="['app:audit:list']">审批进度</el-button>
+                     v-hasPermi="['app:audit:list']" :disabled="scope.row.orderStatus == 0">审批进度</el-button>
+          <el-button link type="primary" icon="Coin" @click="handleSubmit(scope.row)"
+                     v-hasPermi="['app:order:remove']" :disabled="scope.row.orderStatus != 0 && scope.row.orderStatus != 6">提交</el-button>
+          <el-button link type="primary" icon="View" @click="handleView(scope.row)">详情</el-button>
           <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)"
-                     v-hasPermi="['app:order:edit']">修改</el-button>
+                     v-hasPermi="['app:order:edit']" :disabled="scope.row.orderStatus != 0 && scope.row.orderStatus != 6">修改</el-button>
           <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)"
-                     v-hasPermi="['app:order:remove']">删除</el-button>
+                     v-hasPermi="['app:order:remove']" :disabled="scope.row.orderStatus != 0">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -104,7 +104,7 @@
 
     <!-- 添加或修改订单对话框 -->
     <el-dialog :title="title" v-model="open" width="40%" append-to-body>
-      <el-form ref="orderRef" :model="form" :rules="rules" label-width="100px">
+      <el-form :model="form" :rules="rules" label-width="100px" ref="orderRef">
         <el-container>
           <el-header>
             <el-divider content-position="left">明细</el-divider>
@@ -135,11 +135,25 @@
                 </el-form-item>
               </el-col>
 
-              <el-col :span="24">
-                <el-form-item label="金额合计：" prop="totalAmount">
+              <el-col :span="12">
+                <el-form-item :label="typeText" prop="totalAmount">
                   <el-input-number v-model="form.totalAmount" :min="0" controls-position="right" size="large"
-                                   placeholder="请选择金额合计" style="margin-right: 10px" />
+                                   :placeholder="'请选择'+typeText" style="margin-right: 10px" />
                   <span>元</span>
+                </el-form-item>
+              </el-col>
+
+              <el-col :span="12" v-if="form.baoxiaoType == 1">
+                  <el-form-item label="出差人员：" prop="personnels">
+                    <el-input type="text" v-model="form.personnels" placeholder="请填写出差人员" />
+                  </el-form-item>
+              </el-col>
+
+              <el-col :span="12" v-if="form.baoxiaoType == 5">
+                <el-form-item label="订单类型：" prop="orderType">
+                  <el-select v-model="form.orderType" placeholder="订单类型" clearable style="width: 240px">
+                    <el-option v-for="dict in order_type" :key="dict.value" :label="dict.label" :value="dict.value"/>
+                  </el-select>
                 </el-form-item>
               </el-col>
 
@@ -160,22 +174,22 @@
           <el-main>
             <el-row :gutter="10" class="mb8">
               <el-col :span="12">
-                <el-form-item label="收款人："  prop="collectionUser">
+                <el-form-item label="收款人：" prop="collectionUser">
                   <el-input type="text" v-model="form.collectionUser" placeholder="请填写收款人姓名" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="银行卡号："  prop="collectionBank">
+                <el-form-item label="银行卡号：" prop="collectionBank">
                   <el-input type="text" v-model="form.collectionBank" placeholder="请填写银行卡号" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="银行名称："  prop="collectionBankName">
+                <el-form-item label="银行名称：" prop="collectionBankName">
                   <el-input type="text" v-model="form.collectionBankName" placeholder="请填写银行名称" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="开户行:" prop="collectionBankAddress">
+                <el-form-item label="开户行：" prop="collectionBankAddress">
                   <el-input v-model="form.collectionBankAddress" placeholder="请填写开户行" />
                 </el-form-item>
               </el-col>
@@ -183,21 +197,30 @@
           </el-main>
         </el-container>
 
-        <el-container v-if="form.baoxiaoType != 2">
-          <el-header>
-            <el-divider content-position="left">费用明细</el-divider>
-          </el-header>
-          <el-main>
-            <edit-table v-model:data="feeData" :list="feeList" ref="feeRef" />
-          </el-main>
-        </el-container>
-
-        <el-container v-if="form.baoxiaoType != 2">
+        <el-container v-if="form.baoxiaoType != 2 && form.baoxiaoType != 4">
           <el-header>
             <el-divider content-position="left">收款人信息</el-divider>
           </el-header>
           <el-main>
             <edit-table v-model:data="collectionData" :list="collectionList" ref="collectionRef" />
+          </el-main>
+        </el-container>
+
+        <el-container v-if="form.baoxiaoType == 0  || form.baoxiaoType == 4">
+          <el-header>
+            <el-divider content-position="left">费用明细</el-divider>
+          </el-header>
+          <el-main>
+            <edit-table v-model:data="feeData" :list="feeList" :projectData="projectData" ref="feeRef" />
+          </el-main>
+        </el-container>
+
+        <el-container v-if="form.baoxiaoType == 1">
+          <el-header>
+            <el-divider content-position="left">费用明细</el-divider>
+          </el-header>
+          <el-main>
+            <edit-table v-model:data="feeData" :list="feePersonnelList" :projectData="projectData" ref="feePersonnelRef" />
           </el-main>
         </el-container>
 
@@ -220,20 +243,20 @@
 
     <!-- 冲借款 -->
     <el-dialog :title="title" v-model="openCreditCard" width="40%" append-to-body>
-      <el-form ref="orderRef" :model="form" :rules="rules" label-width="100px">
+      <el-form :model="form" :rules="rules" label-width="100px">
         <el-container>
           <el-header>
-            <el-divider content-position="left">冲销借款</el-divider>
+            <el-divider content-position="left">冲借款</el-divider>
           </el-header>
           <el-main>
             <el-row :gutter="10" class="mb8">
               <el-col :span="12">
-                <el-form-item label="金额合计："  prop="collectionUser">
+                <el-form-item label="金额合计："  prop="totalAmount">
                   <el-input type="text" v-model="form.totalAmount" placeholder="请填写金额合计" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="冲销金额："  prop="collectionBank">
+                <el-form-item label="冲销金额："  prop="offsetLoanSum">
                   <el-input type="text" v-model="form.offsetLoanSum" placeholder="请填写冲销金额" />
                 </el-form-item>
               </el-col>
@@ -248,6 +271,11 @@
                 </el-form-item>
               </el-col>
             </el-row>
+          </el-main>
+        </el-container>
+        <el-container>
+          <el-main>
+            <el-button type="primary" @click="showOffsetLoan()">冲销借款</el-button>
           </el-main>
         </el-container>
         <el-container>
@@ -266,7 +294,7 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button :loading="buttonLoading" type="primary" @click="submitForm">确 定</el-button>
+          <el-button :loading="buttonLoading" type="primary" @click="submitCreditCard">确 定</el-button>
           <el-button @click="cancelCreditCard">取 消</el-button>
         </div>
       </template>
@@ -287,6 +315,207 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- 冲借款列表 -->
+    <el-dialog :title="title" v-model="openOffsetLoan" width="40%" append-to-body>
+      <el-container>
+        <el-main>
+          <el-table :data="offsetLoanData"  @selection-change="handleSelectionOffsetLoan">
+            <el-table-column type="selection" width="55" align="center" />
+            <el-table-column label="订单编号" align="center" prop="orderNumber" />
+            <el-table-column label="订单日期" align="center" prop="orderDate" />
+            <el-table-column label="金额合计" align="center" prop="totalAmount" />
+            <el-table-column label="剩余金额" align="center" prop="editableTotalAmount" />
+            <el-table-column label="冲借款金额" align="center" prop="offsetLoanSum" >
+              <template #default="{ row, $index }">
+                <el-input-number @blur="offsetLoanSumEdit(row, $index)" placeholder="请输入冲借款金额" v-model="row.offsetLoanSum" :min="0" size="small" controls-position="right"/>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-main>
+      </el-container>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button :loading="buttonLoading" type="primary" @click="submitOffsetLoan">确 定</el-button>
+          <el-button @click="openOffsetLoan = false">取 消</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 分摊导入 -->
+    <el-dialog :title="upload.title" v-model="upload.open" width="400px" append-to-body>
+      <el-upload
+        ref="uploadRef"
+        :limit="1"
+        accept=".xlsx, .xls"
+        :headers="upload.headers"
+        :data="{orderId:form.orderId}"
+        :action="upload.url"
+        :disabled="upload.isUploading"
+        :on-progress="handleFileUploadProgress"
+        :on-success="handleFileSuccess"
+        :auto-upload="false"
+        drag
+      >
+        <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+        <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+        <template #tip>
+          <div class="el-upload__tip text-center">
+            <span>仅允许导入xls、xlsx格式文件。</span>
+            <el-row justify="center">
+              <el-link :href="clientUnitImportTemplate" target="_blank">客商分摊模板&nbsp;&nbsp;</el-link>
+              <el-link :href="userImportTemplate" target="_blank">人员分摊模板&nbsp;&nbsp;</el-link>
+              <el-link :href="deptImportTemplate" target="_blank">部门分摊模板</el-link>
+            </el-row>
+          </div>
+        </template>
+      </el-upload>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="submitFileForm">确 定</el-button>
+          <el-button @click="upload.open = false">取 消</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 详情 -->
+    <el-dialog :title="title" v-model="openView" width="40%" append-to-body>
+      <el-form :model="form" :rules="rules" label-width="100px" ref="orderRef" :disabled="true">
+        <el-container>
+          <el-header>
+            <el-divider content-position="left">明细</el-divider>
+          </el-header>
+          <el-main>
+            <el-row :gutter="10" class="mb8">
+              <el-col :span="12">
+                <el-form-item label="申请公司：" prop="companyId">
+                  <select-more keyName="companyName" value="companyId" label="companyName" v-model="form.companyId"
+                               url="app/company/list" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="客商：" prop="clientId">
+                  <select-more keyName="clientUnitName" value="clientId" label="clientUnitName" v-model="form.clientId"
+                               url="/app/client/list" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="申请人员：" prop="baoxiaoUserId">
+                  <select-more @change="selectMoreClone" keyName="nickName" value="userId" label="nickName"
+                               v-model="form.baoxiaoUserId" url="/system/user/list" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="申请部门：">
+                  {{ form.deptName ?? "暂无部门信息" }}
+                </el-form-item>
+              </el-col>
+
+              <el-col :span="12">
+                <el-form-item :label="typeText" prop="totalAmount">
+                  <el-input-number v-model="form.totalAmount" :min="0" controls-position="right" size="large"
+                                   :placeholder="'请选择'+typeText" style="margin-right: 10px" />
+                  <span>元</span>
+                </el-form-item>
+              </el-col>
+
+              <el-col :span="12" v-if="form.baoxiaoType == 1">
+                <el-form-item label="出差人员：" prop="personnels">
+                  <el-input type="text" v-model="form.personnels" placeholder="请填写出差人员" />
+                </el-form-item>
+              </el-col>
+
+              <el-col :span="12" v-if="form.baoxiaoType == 5">
+                <el-form-item label="订单类型：" prop="orderType">
+                  <el-select v-model="form.orderType" placeholder="订单类型" clearable style="width: 240px">
+                    <el-option v-for="dict in order_type" :key="dict.value" :label="dict.label" :value="dict.value"/>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+
+              <el-col :span="24">
+                <el-form-item label="事由：">
+                  <el-input v-model="form.remark" :autosize="{ minRows: 2, maxRows: 4 }" type="textarea"
+                            placeholder="请填写相关事由" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-main>
+        </el-container>
+
+        <el-container v-if="form.baoxiaoType == 2">
+          <el-header>
+            <el-divider content-position="left">收款人信息</el-divider>
+          </el-header>
+          <el-main>
+            <el-row :gutter="10" class="mb8">
+              <el-col :span="12">
+                <el-form-item label="收款人：" prop="collectionUser">
+                  <el-input type="text" v-model="form.collectionUser" placeholder="请填写收款人姓名" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="银行卡号：" prop="collectionBank">
+                  <el-input type="text" v-model="form.collectionBank" placeholder="请填写银行卡号" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="银行名称：" prop="collectionBankName">
+                  <el-input type="text" v-model="form.collectionBankName" placeholder="请填写银行名称" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="开户行：" prop="collectionBankAddress">
+                  <el-input v-model="form.collectionBankAddress" placeholder="请填写开户行" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-main>
+        </el-container>
+
+        <el-container v-if="form.baoxiaoType != 2 && form.baoxiaoType != 4">
+          <el-header>
+            <el-divider content-position="left">收款人信息</el-divider>
+          </el-header>
+          <el-main>
+            <edit-table v-model:data="collectionData" :list="collectionList" ref="collectionRef" />
+          </el-main>
+        </el-container>
+
+        <el-container v-if="form.baoxiaoType == 0  || form.baoxiaoType == 4">
+          <el-header>
+            <el-divider content-position="left">费用明细</el-divider>
+          </el-header>
+          <el-main>
+            <edit-table v-model:data="feeData" :list="feeList" :projectData="projectData" ref="feeRef" />
+          </el-main>
+        </el-container>
+
+        <el-container v-if="form.baoxiaoType == 1">
+          <el-header>
+            <el-divider content-position="left">费用明细</el-divider>
+          </el-header>
+          <el-main>
+            <edit-table v-model:data="feeData" :list="feePersonnelList" :projectData="projectData" ref="feePersonnelRef" />
+          </el-main>
+        </el-container>
+
+        <el-container>
+          <el-header>
+            <el-divider content-position="left">附件列表</el-divider>
+          </el-header>
+          <el-main>
+            <order-file v-model:data="fileData" />
+          </el-main>
+        </el-container>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button :loading="buttonLoading" type="primary" @click="openView = false">确 定</el-button>
+          <el-button @click="openView = false">取 消</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -297,17 +526,25 @@ import {
   delOrder,
   addOrder,
   updateOrder,
+  orderAudit,
+  orderUserBorrow,
+  orderWriteOffLoans
 } from "@/api/app/order";
+import { getProjectList } from "@/api/app/project";
 import { getOrderAuditList } from "@/api/app/audit";
 import SelectMore from "@/components/SelectMore/index.vue";
 import EditTable from "@/views/component/editTable/index.vue";
 import OrderFile from "@/views/component/orderFile/index.vue";
 
 import useUserStore from "@/store/modules/user";
+import {getToken} from "@/utils/auth";
 
 const userStore = useUserStore();
-
 const { proxy } = getCurrentInstance();
+const { order_type } = proxy.useDict("order_type");
+const { order_baoxiao_type } = proxy.useDict("order_baoxiao_type");
+
+const offsetLoanFlag = ref(false);
 const orderList = ref([]);
 const open = ref(false);
 const buttonLoading = ref(false);
@@ -321,6 +558,7 @@ const title = ref("");
 
 const feeRef = ref("feeRef");
 const collectionRef = ref("collectionRef");
+const feePersonnelRef = ref("feePersonnelRef");
 
 const data = reactive({
   form: {},
@@ -335,6 +573,7 @@ const data = reactive({
     paymentSum: undefined,
     offsetLoanSum: undefined,
     totalAmount: undefined,
+    editableTotalAmount: undefined,
     collectionId: undefined,
     feeId: undefined,
     isOffsetLoan: undefined,
@@ -379,6 +618,9 @@ const data = reactive({
     totalAmount: [
       { required: true, message: "金额合计不能为空", trigger: "blur" },
     ],
+    editableTotalAmount: [
+      { required: true, message: "冲借款金额不能为空", trigger: "blur" },
+    ],
     collectionId: [
       { required: true, message: "收款人不能为空", trigger: "blur" },
     ],
@@ -422,16 +664,19 @@ const data = reactive({
       { required: true, message: "更新时间不能为空", trigger: "blur" },
     ],
     collectionUser: [
-      { required: true, message: "收款人姓名不能为空", trigger: "blur" },
+      { required: true, message: "收款人姓名不能为空", trigger: "change" },
     ],
     collectionBank: [
-      { required: true, message: "银行卡号不能为空", trigger: "blur" },
+      { required: true, message: "银行卡号不能为空", trigger: "change" },
     ],
     collectionBankName: [
-      { required: true, message: "银行名称不能为空", trigger: "blur" },
+      { required: true, message: "银行名称不能为空", trigger: "change" },
     ],
     collectionBankAddress: [
-      { required: true, message: "开户行不能为空", trigger: "blur" },
+      { required: true, message: "开户行不能为空", trigger: "change" },
+    ],
+    personnels: [
+      { required: true, message: "出差人员不能为空", trigger: "blur" },
     ],
   },
 });
@@ -538,13 +783,225 @@ const feeList = ref({
   ],
 });
 
+const feePersonnelList = ref({
+  title: "费用明细",
+  table: [
+    {
+      value: "feeItem",
+      prop: "feeItem",
+      label: "收支项目",
+      rules: {
+        required: true,
+        message: "请输入收支项目",
+        trigger: "blur",
+      },
+    },
+    {
+      value: "baoxiaoSum",
+      prop: "baoxiaoSum",
+      label: "申请金额",
+      rules: {
+        required: true,
+        message: "请输入申请金额",
+        trigger: "blur",
+      },
+    },
+    {
+      value: "taxRate",
+      prop: "taxRate",
+      label: "税率%",
+      rules: {
+        required: true,
+        message: "请输入税率%",
+        trigger: "blur",
+      },
+    },
+    {
+      value: "specialRicket",
+      prop: "specialRicket",
+      label: "进项税额（专票）",
+      rules: {
+        required: true,
+        message: "请输入进项税额（专票）",
+        trigger: "blur",
+      },
+    },
+    // 添加其他字段信息
+    {
+      value: "departureDate",
+      prop: "departureDate",
+      label: "出发日期",
+      rules: {
+        required: true,
+        message: "请输入出发日期",
+        trigger: "blur",
+      },
+    },
+    {
+      value: "departureLocation",
+      prop: "departureLocation",
+      label: "出发地点",
+      rules: {
+        required: true,
+        message: "请输入出发地点",
+        trigger: "blur",
+      },
+    },
+    {
+      value: "arrivalLocation",
+      prop: "arrivalLocation",
+      label: "到达地点",
+      rules: {
+        required: true,
+        message: "请输入到达地点",
+        trigger: "blur",
+      },
+    },
+    {
+      value: "returnDate",
+      prop: "returnDate",
+      label: "返程日期",
+      rules: {
+        required: true,
+        message: "请输入返程日期",
+        trigger: "blur",
+      },
+    },
+    {
+      value: "numberOfPeople",
+      prop: "numberOfPeople",
+      label: "出差人数",
+      rules: {
+        required: true,
+        message: "请输入出差人数",
+        trigger: "blur",
+      },
+    },
+    {
+      value: "tripDays",
+      prop: "tripDays",
+      label: "出差天数",
+      rules: {
+        required: true,
+        message: "请输入出差天数",
+        trigger: "blur",
+      },
+    },
+    {
+      value: "transportation",
+      prop: "transportation",
+      label: "交通工具",
+      rules: {
+        required: true,
+        message: "请输入交通工具",
+        trigger: "blur",
+      },
+    },
+    {
+      value: "transportationFee",
+      prop: "transportationFee",
+      label: "交通费",
+      rules: {
+        required: true,
+        message: "请输入交通费",
+        trigger: "blur",
+      },
+    },
+    {
+      value: "travelAllowance",
+      prop: "travelAllowance",
+      label: "出差津贴",
+      rules: {
+        required: true,
+        message: "请输入出差津贴",
+        trigger: "blur",
+      },
+    },
+    {
+      value: "accommodationFee",
+      prop: "accommodationFee",
+      label: "住宿费",
+      rules: {
+        required: true,
+        message: "请输入住宿费",
+        trigger: "blur",
+      },
+    },
+    {
+      value: "transportationSubsidy",
+      prop: "transportationSubsidy",
+      label: "交通补助",
+      rules: {
+        required: true,
+        message: "请输入交通补助",
+        trigger: "blur",
+      },
+    },
+    {
+      value: "mealSubsidy",
+      prop: "mealSubsidy",
+      label: "伙食补助",
+      rules: {
+        required: true,
+        message: "请输入伙食补助",
+        trigger: "blur",
+      },
+    },
+    {
+      value: "otherExpenses",
+      prop: "otherExpenses",
+      label: "其他",
+      rules: {
+        required: true,
+        message: "请输入其他",
+        trigger: "blur",
+      },
+    },
+  ],
+});
+
+const upload = reactive({
+  // 是否显示弹出层（用户导入）
+  open: false,
+  // 弹出层标题（用户导入）
+  title: "",
+  // 是否禁用上传
+  isUploading: false,
+  // 是否更新已经存在的用户数据
+  updateSupport: 0,
+  // 设置上传的请求头部
+  headers: { Authorization: "Bearer " + getToken() },
+  // 上传的地址
+  url: import.meta.env.VITE_APP_BASE_API + "/app/share/importShare"
+});
+const clientUnitImportTemplate = import.meta.env.VITE_APP_BASE_API + "/app/share/importTemplate/2";
+const deptImportTemplate = import.meta.env.VITE_APP_BASE_API + "/app/share/importTemplate/0";
+const userImportTemplate = import.meta.env.VITE_APP_BASE_API + "/app/share/importTemplate/1";
+
+const selectedOffsetLoanRows = ref([]);
 const openCreditCard = ref(false);
 const openAudit = ref(false);
+const openOffsetLoan = ref(false);
+const openView = ref(false);
 const AuditData = ref([]);
 const feeData = ref([]);
+const offsetLoanData = ref([]);
 const collectionData =ref([]);
 const fileData = ref([]);
+const projectData = ref([]);
 const { queryParams, form, rules } = toRefs(data);
+
+watch(()=>feeData,(newValue,oldValue)=>{
+  let totalAmount = 0;
+  if (newValue.value.length) {
+    totalAmount = newValue.value.reduce((acc, item) => acc + (item.baoxiaoSum ? Number(item.baoxiaoSum) : 0), 0);
+  }
+  form.value.totalAmount = totalAmount;
+},{deep:true})
+
+const typeText = computed(() => {
+  return form.value.baoxiaoType == 2 ? "借款金额：" : "金额合计：";
+});
 
 /** 查询订单列表 */
 function getList () {
@@ -554,6 +1011,12 @@ function getList () {
     total.value = response.total;
     loading.value = false;
   });
+}
+
+function getAllProject(){
+  getProjectList().then(res => {
+    projectData.value = res.data;
+  })
 }
 
 // 取消按钮
@@ -579,6 +1042,7 @@ function reset () {
     paymentSum: null,
     offsetLoanSum: null,
     totalAmount: null,
+    editableTotalAmount: null,
     collectionId: null,
     feeId: null,
     isOffsetLoan: null,
@@ -600,7 +1064,13 @@ function reset () {
     collectionUser: null,
     collectionBank: null,
     collectionBankName: null,
-    collectionBankAddress: null
+    collectionBankAddress: null,
+    collections:[{
+      collectionUser:null,
+      collectionBank:null,
+      collectionBankName:null,
+      collectionBankAddress:null
+    }]
   };
   proxy.resetForm("orderRef");
 }
@@ -625,7 +1095,7 @@ function handleSelectionChange (selection) {
 }
 
 /** 新增按钮操作 */
-async function handleAdd (name, index) {
+function handleAdd (name, index) {
   reset();
   feeData.value = [];
   collectionData.value = [];
@@ -636,7 +1106,7 @@ async function handleAdd (name, index) {
 }
 
 /** 修改按钮操作 */
-async function handleUpdate (row) {
+function handleUpdate (row) {
   loading.value = true;
   reset();
   const _orderId = row.orderId || ids.value;
@@ -649,28 +1119,58 @@ async function handleUpdate (row) {
     form.value = response.data;
     open.value = true;
     title.value = "修改订单";
+
+    if (response.data.baoxiaoType == 2){
+      form.value.collectionUser = response.data.collections[0].collectionUser;
+      form.value.collectionBank = response.data.collections[0].collectionBank;
+      form.value.collectionBankName = response.data.collections[0].collectionBankName;
+      form.value.collectionBankAddress = response.data.collections[0].collectionBankAddress;
+    }
+
   });
 }
 
 /** 提交按钮 */
 async function submitForm () {
+  let collections = null;
+  let fees = null;
 
-  if(form.value.baoxiaoType != 2){
+  switch (form.value.baoxiaoType){
+    case 0:
+      collections = await collectionRef.value.isSave(); //收款人信息
+      fees = await feeRef.value.isSave(); //费用明细
 
-    const fees = await feeRef.value.isSave(); //费用明细
-    const collections = await collectionRef.value.isSave(); //收款人信息
+      if (!fees || !collections) return false;
 
-    if (!fees || !collections) {
-      return false;
-    }
-  }
+      break;
+    case 1:
+      collections = await collectionRef.value.isSave();
+      fees = await feePersonnelRef.value.isSave();
 
-  /*借款*/
-  if(form.value.baoxiaoType == 2){
-    collectionData.value = [];
-    form.value.collectionSum = 0;
-    const {collectionSum,collectionUser, collectionBank, collectionBankName, collectionBankAddress} = form.value;
-    collectionData.value.push({collectionSum,collectionUser,collectionBank,collectionBankName,collectionBankAddress});
+      if (!fees || !collections)  return false;
+
+      break
+    case 2:
+      collectionData.value = [];
+      const {collectionSum,collectionUser, collectionBank, collectionBankName, collectionBankAddress} = form.value;
+      collectionData.value.push({collectionSum,collectionUser,collectionBank,collectionBankName,collectionBankAddress});
+
+      break;
+    case 3:
+       collections = await collectionRef.value.isSave();
+      if (!collections) return false;
+
+      break;
+    case 4:
+      fees = await feeRef.value.isSave();
+      if (!fees) return false;
+
+      break;
+    case 5:
+      collections = await collectionRef.value.isSave();
+      if (!collections) return false;
+
+      break;
   }
 
   const fileIds = fileData.value.map((file) => file.fileId);
@@ -682,7 +1182,7 @@ async function submitForm () {
       form.value.fileIds = fileIds;
 
       buttonLoading.value = true;
-      console.log(form.value)
+
       if (form.value.orderId != null) {
         updateOrder(form.value)
           .then((response) => {
@@ -750,7 +1250,6 @@ const handleOffsetLoan =(row) => {
 
   const _orderId = row.orderId || ids.value;
   getOrder(_orderId).then((response) => {
-    console.log(response)
     form.value = response.data;
     feeData.value = response.data.fees
     collectionData.value = response.data.collections
@@ -762,8 +1261,17 @@ const handleOffsetLoan =(row) => {
 }
 
 /*分摊*/
-const handleShare = () => {
-  console.log(2)
+const handleShare = (row) => {
+  upload.open = true;
+  upload.title = "分摊";
+  form.value = row;
+}
+/*提交*/
+const handleSubmit = (row) => {
+  orderAudit({orderId:row.orderId}).then(res => {
+    getList();
+    proxy.$modal.msgSuccess(res.msg);
+  })
 }
 
 /*审批进度*/
@@ -774,5 +1282,99 @@ const handleAudit = (row) => {
   })
 }
 
+// 获取已审批完毕借款
+const showOffsetLoan = () => {
+  openOffsetLoan.value = true;
+  title.value = "冲借款列表";
+
+  orderUserBorrow().then(res => {
+    offsetLoanData.value = res.rows;
+  })
+}
+
+// 编辑冲借款金额
+const offsetLoanSumEdit = (row, $index) => {
+  offsetLoanData.value[$index] = row;
+};
+
+// 多选冲借款金额
+const handleSelectionOffsetLoan = (val) => {
+  selectedOffsetLoanRows.value = val;
+}
+
+//  提交冲借款金额
+const submitOffsetLoan = () => {
+  const { offsetLoanSum, totalAmount } = form.value;
+  const rows = selectedOffsetLoanRows.value;
+  const { sum, flag } = rows.reduce((acc, item) => {
+      const newSum = Number(acc.sum) + Number(item.offsetLoanSum);
+      const newFlag = acc.flag || Number(item.offsetLoanSum) > Number(item.editableTotalAmount);
+
+      return { sum: newSum, flag: newFlag };
+    }, { sum: 0, flag: false }
+  );
+
+  if (flag) return proxy.$modal.msgWarning("剩余金额不能大于借款金额");
+
+  form.value.offsetLoanSum = sum;
+  form.value.paymentSum = totalAmount > sum ? totalAmount - sum : 0;
+  form.value.repaymentSum = totalAmount < sum ? totalAmount - sum : 0;
+
+  openOffsetLoan.value = false;
+}
+
+// 冲借款提交
+const submitCreditCard = () => {
+  const rows = selectedOffsetLoanRows.value;
+  const { totalAmount, offsetLoanSum, orderId } = form.value;
+
+  orderWriteOffLoans({offsetLoans: rows, orderId:orderId, totalAmount:totalAmount, offsetLoanSum:offsetLoanSum,}).then(res=>{
+    proxy.$modal.msgSuccess(res.msg);
+    openCreditCard.value = false;
+    reset();
+    getList();
+  })
+}
+
+/**文件上传中处理 */
+const handleFileUploadProgress = (event, file, fileList) => {
+  upload.isUploading = true;
+};
+/** 文件上传成功处理 */
+const handleFileSuccess = (response, file, fileList) => {
+  upload.open = false;
+  upload.isUploading = false;
+  proxy.$refs["uploadRef"].handleRemove(file);
+  proxy.$alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + response.msg + "</div>", "导入结果", { dangerouslyUseHTMLString: true });
   getList();
+};
+
+const submitFileForm = () => {
+  proxy.$refs["uploadRef"].submit();
+}
+
+const handleView = (row)=>{
+
+  const _orderId = row.orderId || ids.value;
+  getOrder(_orderId).then((response) => {
+    feeData.value = response.data.fees
+    collectionData.value = response.data.collections
+    fileData.value = response.data.files;
+
+    loading.value = false;
+    form.value = response.data;
+    title.value = "详情"
+    openView.value = true;
+
+    if (response.data.baoxiaoType == 2){
+      form.value.collectionUser = response.data.collections[0].collectionUser;
+      form.value.collectionBank = response.data.collections[0].collectionBank;
+      form.value.collectionBankName = response.data.collections[0].collectionBankName;
+      form.value.collectionBankAddress = response.data.collections[0].collectionBankAddress;
+    }
+
+  });
+}
+getList();
+getAllProject();
 </script>

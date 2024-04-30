@@ -6,6 +6,7 @@ import cn.hutool.core.lang.tree.Tree;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baoxiao.system.mapper.SysDeptMapper;
 import com.baoxiao.system.mapper.SysRoleMapper;
 import com.baoxiao.system.mapper.SysUserMapper;
@@ -44,6 +45,18 @@ public class SysDeptServiceImpl implements ISysDeptService, DeptService {
     private final SysDeptMapper baseMapper;
     private final SysRoleMapper roleMapper;
     private final SysUserMapper userMapper;
+
+    /**
+     * 通过名字查询部门
+     *
+     * @param name
+     */
+    @Override
+    public SysDept queryDeptByName(String name) {
+        LambdaQueryWrapper<SysDept> lqw = Wrappers.lambdaQuery();
+        lqw.eq(name != null, SysDept::getDeptName, name);
+        return baseMapper.selectVoOne(lqw);
+    }
 
     /**
      * 查询部门管理数据

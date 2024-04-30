@@ -3,6 +3,7 @@ package com.baoxiao.app.domain.dto;
 import com.baoxiao.app.domain.BaoxiaoCollection;
 import com.baoxiao.app.domain.BaoxiaoFee;
 import com.baoxiao.common.core.validate.AddGroup;
+import com.baoxiao.common.core.validate.EditGroup;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -39,6 +40,10 @@ public class BaoxiaoOrderAddDto {
 
     @NotNull(message = "金额合计不能为空", groups = { AddGroup.class })
     private BigDecimal totalAmount;
+
+    private BigDecimal editableTotalAmount;
+
+    private String personnels;
 
     private String remark;
 

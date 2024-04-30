@@ -8,7 +8,11 @@ import com.alibaba.excel.annotation.ExcelIgnoreUnannotated;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.baoxiao.common.annotation.ExcelDictFormat;
 import com.baoxiao.common.convert.ExcelDictConvert;
+import com.baoxiao.common.core.validate.AddGroup;
+import com.baoxiao.common.core.validate.EditGroup;
 import lombok.Data;
+
+import javax.validation.constraints.NotNull;
 
 
 /**
@@ -49,6 +53,12 @@ public class BaoxiaoOrderVo {
     private Date orderDate;
 
     /**
+     * 订单次数
+     */
+    @ExcelProperty(value = "订单次数")
+    private Integer orderNum;
+
+    /**
      * 报销类型
      */
     @DictFormat(dictDataSource = "order_baoxiao_type")
@@ -56,28 +66,16 @@ public class BaoxiaoOrderVo {
     private Integer baoxiaoType;
 
     /**
-     * 报销金额
-     */
-    @ExcelProperty(value = "报销金额")
-    private BigDecimal repaymentSum;
-
-    /**
-     * 支付金额
-     */
-    @ExcelProperty(value = "支付金额")
-    private BigDecimal paymentSum;
-
-    /**
-     * 冲借款金额
-     */
-    @ExcelProperty(value = "冲借款金额")
-    private BigDecimal offsetLoanSum;
-
-    /**
      * 金额合计
      */
     @ExcelProperty(value = "金额合计")
     private BigDecimal totalAmount;
+
+    /**
+     * 冲借款金额后可编辑金额
+     */
+    @ExcelProperty(value = "借款后可编辑金额")
+    private BigDecimal editableTotalAmount;
 
     /**
      * 收款人
@@ -95,19 +93,22 @@ public class BaoxiaoOrderVo {
      * 冲借款 (0 未冲 1已冲)
      */
     @DictFormat(dictDataSource = "order_offset_loan")
-    @ExcelProperty(value = "冲借款 (0 未冲 1已冲)")
+    @ExcelProperty(value = "冲借款", converter = ExcelDictConvert.class)
+    @ExcelDictFormat(readConverterExp = "0=未冲,1=已冲")
     private Integer isOffsetLoan;
 
     /**
      * 部门分摊 (0末分 1已分)
      */
     @DictFormat(dictDataSource = "order_dept_share")
-    @ExcelProperty(value = "部门分摊 (0末分 1已分)")
+    @ExcelProperty(value = "部门分摊", converter = ExcelDictConvert.class)
+    @ExcelDictFormat(readConverterExp = "0=末分,1=已分")
     private Integer isDeptShare;
 
     /**
      * 状态 （0显示 1隐藏）
      */
+    @DictFormat(dictDataSource = "order_status")
     @ExcelProperty(value = "状态 ", converter = ExcelDictConvert.class)
     @ExcelDictFormat(readConverterExp = "0=显示,1=提交")
     private Integer orderStatus;
@@ -159,6 +160,12 @@ public class BaoxiaoOrderVo {
      */
     @ExcelProperty(value = "客户id")
     private Long clientId;
+
+    /**
+     * 出差人员
+     */
+    @ExcelProperty(value = "出差人员")
+    private String personnels;
 
     /**
      * 事由
