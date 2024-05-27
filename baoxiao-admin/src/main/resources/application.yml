@@ -138,6 +138,8 @@ security:
     # actuator 监控配置
     - /actuator
     - /actuator/**
+    # 积木报表
+    - /jmreport/**
 
 # MyBatisPlus配置
 # https://baomidou.com/config/
@@ -275,3 +277,7 @@ management:
       show-details: ALWAYS
     logfile:
       external-file: ./logs/sys-console.log
+
+minidao :
+  base-package: org.jeecg.modules.jmreport.desreport.dao*
+  db-type: mysql

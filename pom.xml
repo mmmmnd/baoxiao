@@ -47,6 +47,12 @@
         <aws-java-sdk-s3.version>1.12.400</aws-java-sdk-s3.version>
         <!-- SMS 配置 -->
         <sms4j.version>2.2.0</sms4j.version>
+
+        <!--积木报表-->
+        <jimureport.version>1.7.4</jimureport.version>
+
+        <!--积木报表 mogodb/redis支持包-->
+        <jimureport-nosql.version>1.6.0</jimureport-nosql.version>
     </properties>
 
     <profiles>
@@ -273,6 +279,20 @@
                 <groupId>org.bouncycastle</groupId>
                 <artifactId>bcprov-jdk15to18</artifactId>
                 <version>${bouncycastle.version}</version>
+            </dependency>
+
+            <!--积木报表-->
+            <dependency>
+                <groupId>org.jeecgframework.jimureport</groupId>
+                <artifactId>jimureport-spring-boot-starter</artifactId>
+                <version>${jimureport.version}</version>
+            </dependency>
+
+            <!--积木报表 mogodb/redis支持包-->
+            <dependency>
+                <groupId>org.jeecgframework.jimureport</groupId>
+                <artifactId>jimureport-nosql-starter</artifactId>
+                <version>${jimureport-nosql.version}</version>
             </dependency>
 
             <!-- 定时任务 -->

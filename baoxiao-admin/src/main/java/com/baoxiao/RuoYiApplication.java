@@ -2,6 +2,7 @@ package com.baoxiao;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.context.metrics.buffering.BufferingApplicationStartup;
 
 /**
@@ -9,8 +10,7 @@ import org.springframework.boot.context.metrics.buffering.BufferingApplicationSt
  *
  * @author ruoyi
  */
-
-@SpringBootApplication
+@SpringBootApplication(exclude = { DataSourceAutoConfiguration.class },scanBasePackages = {"org.jeecg.modules.jmreport","com.baoxiao"})
 public class RuoYiApplication {
 
     public static void main(String[] args) {
