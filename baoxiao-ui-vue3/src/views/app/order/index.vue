@@ -114,7 +114,7 @@
               <el-col :span="12">
                 <el-form-item label="申请公司：" prop="companyId">
                   <select-more keyName="companyName" value="companyId" label="companyName" v-model="form.companyId"
-                               url="app/company/list" />
+                               url="app/company/list"  :pageSize="2"/>
                 </el-form-item>
               </el-col>
               <el-col :span="12">

@@ -1,254 +1,174 @@
 <template>
-  <el-select
-    ref="selectMoreRef"
-    v-model="selectVal"
-    :class="mulSelectTextCls"
-    :multiple="multiple"
-    v-show-mul-text-directive="multipleShowText"
-    :collapse-tags="multiple && !multipleShowText"
-    :collapse-tags-tooltip="multiple && !multipleShowText"
-    :placeholder="selectPlaceholder"
-    :popper-class="onlyId"
-    :disabled="disabled"
-    v-load-more-directive="getList"
-    v-search-directive
-    @change="change"
-    @visible-change="visibleChange"
-    clearable
-    readonly
-  >
-    <el-option
-      v-for="item in list"
-      :key="item[value]"
-      :label="optionText(item[value], item[label])"
-      :value="item[value]"
-    >
+  <el-select v-model="selectVal" :class="mulSelectTextCls" :multiple="multiple"
+             v-show-mul-text-directive="multipleShowText" :collapse-tags="multiple && !multipleShowText"
+             :collapse-tags-tooltip="multiple && !multipleShowText" :placeholder="placeholder" :popper-class="onlyId"
+             :disabled="disabled" v-load-more-directive="getList" v-search-directive @visibleChange="visibleChange" clearable
+             @change="selectChange" readonly>
+    <el-option v-for="item in list" :key="item[value]" :label="item[label]" :value="item[value]">
       <!-- option文字 -->
-      <p v-if="multiple" :title="optionText(item[value], item[label])">
+      <p class="option-wrap" v-if="multiple" :title="item[label]">
         <label class="el-checkbox">
           <span class="el-checkbox__inner"></span>
-          <span
-            class="option-text"
-            v-text="optionText(item[value], item[label])"
-          ></span>
+          <span class="option-text" v-text="item[label]"></span>
         </label>
       </p>
-      <p
-        v-else
-        class="option-text"
-        v-text="optionText(item[value], item[label])"
-        :title="optionText(item[value], item[label])"
-      ></p>
+      <p v-else class="option-wrap option-text" v-text="item[label]" :title="item[label]"></p>
     </el-option>
-    <el-option v-if="showLoading" value="" disabled>
-      <el-icon class="is-loading loading-icon"> <Loading /> </el-icon
-      >正在加载中...
+    <el-option v-show="showLoading" value="" disabled>
+      <el-icon class="is-loading loading-icon">
+<!--        <i-ep-loading />-->
+      </el-icon>正在加载中...
     </el-option>
   </el-select>
 
   <!-- 多选时的显示文字 -->
-  <div
-    v-if="multipleShowText"
-    :class="`more-sel-text-${onlyId}`"
-    class="more-sel-text"
-  >
-    <el-tooltip
-      effect="dark"
-      placement="right-start"
-      :offset="40"
-      :disabled="!selectedArrText"
-    >
+  <div v-if="multipleShowText" :class="`more-sel-text-${onlyId}`" class="more-sel-text">
+    <el-tooltip effect="dark" placement="right-start" :offset="40" :disabled="!selectedArrText">
       <template #content>
         <p class="tool-tip-text">{{ selectedArrText }}</p>
       </template>
       <div class="text-wrap">
-        <input
-          class="el-input__inner"
-          readonly
-          type="text"
-          :value="selectedArrText"
-        />
+        <input class="el-input__inner" readonly type="text" :value="selectedArrText">
       </div>
     </el-tooltip>
   </div>
 
   <!-- select里input搜索框 -->
-  <el-form
-    @submit.prevent
-    @click.stop
-    :class="`more-filter-${onlyId}`"
-    class="more-filter"
-  >
+  <el-form @submit.prevent @click.stop :class="`more-filter-${onlyId}`" class="more-filter">
     <el-form-item>
-      <el-input
-        v-model.trim="keywords"
-        clearable
-        :placeholder="searchPlaceholder"
-      >
+      <el-input v-model.trim="keywords" clearable :placeholder="searchPlaceholder">
       </el-input>
     </el-form-item>
   </el-form>
 </template>
 
 <script setup>
-import { useTextEffect, useDirectivesEffect, useListEffect } from "./index";
+import { useDirectivesEffect, useListEffect } from './index'
 
 const props = defineProps({
-  url: {
-    // 远程地址
+  modelValue: { // v-model
+
+  },
+  text: { // v-model:text
+
+  },
+  url: { // 远程地址
     required: true,
     type: String,
-    default: "",
+    default: ''
   },
-  /*
-   当需要编辑回填时，整体页面需要加个loading，让该组件不能点击。
-   或判断是编辑页面，将该组件置为disabled，等有editName后，再把disabled置为false
-  */
-  editData: {
-    // 编辑回填选中的列表，编辑时必须
-    type: Array,
-    default() {
-      return [];
-    },
-  },
-  disabled: {
-    // 是否禁用
-    type: Boolean,
-    default: false,
-  },
-  value: {
-    // value配置项
+  pageNumName: { // 搜索条件的当前页名
     type: String,
-    default: "",
+    default: 'pageNum'
   },
-  label: {
-    // label配置项
+  pageSizeName: { // 搜索条件的每页个数名
     type: String,
-    default: "name",
+    default: 'pageSize'
   },
-  /*
-   当额外传参是动态变化的，需要用响应式的方式传进来
-  */
-  otherParams: {
-    // 接口传参
+  pageSize: { // 每次传参个数
+    type: Number,
+    default: 20,
+  },
+  keyName: { // 搜索条件的key名
+    type: String,
+    default: 'keywords'
+  },
+  placeholder: {
+    type: String,
+    default: '请选择'
+  },
+  searchPlaceholder: { // 搜索显示文字
+    type: String,
+    default: '模糊搜索名称'
+  },
+  value: { // value配置项
+    type: String,
+    default: 'id'
+  },
+  label: { // label配置项
+    type: String,
+    default: 'name'
+  },
+  otherParams: { // 接口传参。当额外传参是动态变化的，需要用响应式的方式传进来
     type: Object,
     default() {
-      return {};
-    },
+      return {}
+    }
+  },
+  handleResult: { // 处理接口返回的数据，使其返回data和page的组合形式
+    type: Function,
+    default: (res) => {
+      return res
+    }
+  },
+  defaultList: { // 默认选项
+    type: Array,
+    default: () => {
+      return []
+    }
+  },
+  disabled: { // 是否禁用
+    type: Boolean,
+    default: false,
   },
   multiple: {
     type: Boolean, // 是否多选
     default: false,
   },
-  multipleShowText: {
-    // 是否把多选结果显示成文字
+  multipleShowText: { // 是否把多选结果显示成文字
     type: Boolean,
     default: false,
   },
-  hasAll: {
-    // 是否有全部
-    type: Boolean,
-    default: false,
+  editData: { // 编辑回填选中的列表，编辑时必须
+    type: Array,
+    default() {
+      return []
+    }
   },
-  pageSize: {
-    // 每次传参个数
-    type: Number,
-    default: 20,
-  },
-  keyName: {
-    // 搜索条件的key名
-    type: String,
-    default: "keywords",
-  },
-  pageNumName: {
-    // 搜索条件的当前页名
-    type: String,
-    default: "pageNum",
-  },
-  pageSizeName: {
-    // 搜索条件的每页个数名
-    type: String,
-    default: "pageSize",
-  },
-  showId: {
-    // 是否显示id
-    type: Boolean,
-    default: false,
-  },
-  searchPldText: {
-    // 搜索显示文字
-    type: String,
-    default: "",
-  },
-  modelValue: {
-    // v-model的隐藏传参，无需手动传
-    type: [Number, String, Array],
-  },
-});
+})
 
-const selectMoreRef = ref();
 
-const emit = defineEmits(["change", "visibleChange", "update:modelValue"]);
-
-// 搜索和列表
-const {
-  selectVal,
-  selectedArrText,
-  keywords,
-  showLoading,
-  list,
-  change,
-  getList,
-  visibleChange,
-} = useListEffect(props, emit, selectMoreRef);
-
-// 动态配置项
-const { optionText, searchPlaceholder, selectPlaceholder } =
-  useTextEffect(props);
+const emits = defineEmits(['change', 'visibleChange', 'update:modelValue', 'update:text'])
 
 // 指令
-const { onlyId, vLoadMoreDirective, vSearchDirective, vShowMulTextDirective } =
-  useDirectivesEffect();
+const { onlyId, vLoadMoreDirective, vSearchDirective, vShowMulTextDirective } = useDirectivesEffect()
+
+// 搜索和列表
+const { selectVal, selectedArrText, keywords, list, getList, visibleChange, selectChange, clear, showLoading } = useListEffect(props, emits)
 
 // 多选样式
 const mulSelectTextCls = computed(() => {
   return {
-    "more-wrap": props.multiple,
-    "more-wrap-text": props.multipleShowText,
-    [`more-wrap-text-${onlyId}`]: props.multipleShowText,
-  };
-});
+    'more-wrap': props.multiple,
+    'more-wrap-text': props.multipleShowText,
+    [`more-wrap-text-${onlyId}`]: props.multipleShowText
+  }
+})
+
+// 暴露组件方法
+defineExpose({
+  clear
+})
 </script>
 
 <style lang="scss" scoped>
-.el-select.el-select--large {
-  width: 100%;
-}
 
 .more-filter {
   padding: 10px 10px 0;
   min-width: 230px;
 
   .el-form-item {
-    margin-bottom: 0;
+    margin-bottom: 0
   }
 }
 
-.el-select-dropdown__item {
-  height: unset;
-  line-height: unset;
-}
-
-.el-select-dropdown__empty {
-  padding: 14px 0;
+.option-wrap {
+  margin: 0 -10px 0 -7px;
 }
 
 .option-text {
-  overflow: hidden;
-  white-space: nowrap;
-  word-break: keep-all;
-  text-overflow: ellipsis;
   max-width: 300px;
+  margin-left: 5px;
 }
 
 .loading-icon {
@@ -256,13 +176,13 @@ const mulSelectTextCls = computed(() => {
   vertical-align: middle;
 }
 
-// 多选时显示原有的标签样式
+/* // 多选时显示原有的标签样式 */
 .more-wrap :deep(.el-select-tags-wrapper.has-prefix) {
   display: flex;
   flex-wrap: nowrap;
 }
 
-// 多选时显示文字样式
+/* // 多选时显示文字样式 */
 .more-wrap-text {
   :deep(.el-select__tags) {
     display: none;
@@ -288,7 +208,7 @@ const mulSelectTextCls = computed(() => {
   overflow-y: auto;
 }
 
-// 多选options样式
+/* // 多选options样式  */
 .el-select-dropdown.is-multiple .el-select-dropdown__item.selected {
   &:after {
     display: none;
@@ -302,8 +222,10 @@ const mulSelectTextCls = computed(() => {
       transform: rotate(45deg) scaleY(1);
     }
   }
-}
 
+}
+</style>
+<style>
 /* 多选样式选中文字弹出样式 */
 .el-select__collapse-tags {
   max-width: 500px;

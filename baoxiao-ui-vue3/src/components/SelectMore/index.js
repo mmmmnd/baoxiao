@@ -11,7 +11,6 @@ const debounce = (func, wait) => { // 演示用，直接引入了debounce。
   }
 }
 
-// 当前组件唯一id
 let idIndex = 0
 
 // 指令相关
@@ -21,20 +20,22 @@ export const useDirectivesEffect = () => {
 
   // 监听滚动到底部时，执行
   const vLoadMoreDirective = {
-    mounted (el, binding) {
+    mounted(el, binding) {
+      const self = el.target
       const selectDropDownWrap = document.querySelector(`.el-popper.${onlyId} .el-select-dropdown .el-select-dropdown__wrap`)
-      selectDropDownWrap?.addEventListener('scroll', function () {
-        const scrollToBottom = Math.floor(this.scrollHeight - this.scrollTop) <= this.clientHeight
+      selectDropDownWrap?.addEventListener('scroll', function (event) {
+        const scrollToBottom = Math.floor(self.scrollHeight - self.scrollTop) <= self.clientHeight
         if (scrollToBottom) {
           binding.value()
         }
-      })
+        event.preventDefault() // 阻止默认滚动行为
+      }, { passive: true }); // 设置为被动
     }
   }
 
   // 下拉框内插入搜索框
   const vSearchDirective = {
-    mounted (el, binding) {
+    mounted(el, binding) {
       const selectDropDown = document.querySelector(`.el-popper.${onlyId} .el-select-dropdown`)
       const searchDom = document.querySelector(`.more-filter-${onlyId}`)
       searchDom && selectDropDown?.prepend(searchDom)
@@ -43,7 +44,7 @@ export const useDirectivesEffect = () => {
 
   // 显示多选选中的值
   const vShowMulTextDirective = {
-    mounted (el, binding) {
+    mounted(el, binding) {
       if (binding.value) {
         const mulSelectDom = document.querySelector(`.more-wrap-text-${onlyId} .select-trigger`)
         const textDom = document.querySelector(`.more-sel-text-${onlyId}`)
@@ -56,22 +57,30 @@ export const useDirectivesEffect = () => {
 }
 
 // 页面数据
-export const useListEffect = (props, emit, selectMoreRef) => {
-  const list = ref([]) // 列表数据
-  const keywords = ref('') // 搜索关键字
-  const searchSet = reactive({
+export const useListEffect = (props, emits) => {
+  let list = ref([]) // 列表数据
+  let selectVal = ref(props.multiple ? [] : undefined) // select框的值
+  let selectedArrText = ref([]) // 多选时选中的文字
+  let originListInfo = {} // 源数据详情
+  let keywords = ref('') // 搜索关键字
+  let searchSet = reactive({
     init: true, // 是否是第一次加载
     pageNum: 1, // 当前页数
     loading: false, // 正在请求接口
-    hasMore: false,  // 有更多数据
+    isFinish: false,  // 数据加载完成
   })
 
   // 请求接口获取数据
+  let controller // 接口api
   const getList = async () => {
-    if (searchSet.loading) {
+    // 加载完成或正在加载时，取消加载
+    if (searchSet.isFinish || searchSet.loading) {
       return false
     }
 
+    // 中断上次的请求。防止加载分页数据时，搜索内容的结果是上一次的分页内容
+    controller && controller.abort()
+    controller = new AbortController()
 
     searchSet.loading = true
     const pageNum = searchSet.pageNum++;
@@ -89,49 +98,60 @@ export const useListEffect = (props, emit, selectMoreRef) => {
       return false
     }
 
-    const { total, rows = [] } = result
     searchSet.loading = false
-    searchSet.hasMore = pageNum * pageSize < total?.total
+    const { total, rows = [] } = props.handleResult(result)
+    searchSet.isFinish = pageNum * pageSize >= total
     list.value = list.value.concat(rows)
   }
+  // change事件
+  const selectChange = (selectId) => {
+    const idKey = props.value
+    const textKey = props.label
+    let updateId = undefined // 选中的id
+    let updateText = undefined // 选中的text
+    let updateOriginData = undefined // 选中的数据信息
 
-  // 展示加载更多选项
-  const showLoading = computed(() => {
-    return searchSet.hasMore || searchSet.loading
-  })
+    const listValue = toRaw(list.value)
+    if (props.multiple) { // 多选
+      updateId = []
+      updateText = []
+      updateOriginData = []
 
-  // select框的值
-  const selectVal = computed({
-    get: function () {
-      return props.modelValue
-    },
-    set: async function (val) {
-      emit('update:modelValue', val)
+      selectId?.forEach(itemId => {
+        let originInfo = originListInfo[itemId]
+        if (!originInfo) {
+          originInfo = listValue.find(itemObj => itemObj[idKey] === itemId)
+          originListInfo[itemId] = originInfo
+        }
+        updateId.push(originInfo[idKey])
+        updateText.push(originInfo[textKey])
+        updateOriginData.push(originInfo)
+      })
+      selectedArrText.value = updateText.join(',')
+    } else { // 非多选
+      let originInfo = selectId ? originListInfo[selectId] : {}
+      if (selectId && !originInfo) {
+        originInfo = listValue.find(itemObj => itemObj[idKey] === selectId)
+        originListInfo[selectId] = originInfo
+      }
 
+      updateId = originInfo[idKey]
+      updateText = originInfo[textKey]
+      updateOriginData = originInfo
     }
-  })
-  const change = () => {
-    const index = selectMoreRef.value.hoverIndex;
-    emit('change', index, list.value);
-  }
 
-  // 多选时选中的文字
-  const selectedArrText = props.multiple ? computed(() => {
-    let text = []
-    const selectedArr = toRaw(selectMoreRef?.value?.selected)
-    selectedArr?.forEach((item) => {
-      text.push(item.currentLabel)
-    })
-    return text.join(',')
-  }) : ''
+    emits('update:modelValue', updateId)
+    emits('update:text', updateText)
+    emits('change', updateOriginData)
+  }
 
   // 重置请求数据
   const resetList = () => {
     // 重置请求状态
     searchSet.pageNum = 1
     searchSet.loading = false
-    searchSet.hasMore = false
-    list.value = []
+    searchSet.isFinish = false
+    list.value = props.defaultList
 
     // 请求数据
     getList()
@@ -139,7 +159,7 @@ export const useListEffect = (props, emit, selectMoreRef) => {
 
   // 展示时请求接口
   const visibleChange = (visible) => {
-    emit('visibleChange', visible)
+    emits('visibleChange', visible)
     if (visible && searchSet.init) {
       searchSet.init = false
       resetList()
@@ -149,40 +169,40 @@ export const useListEffect = (props, emit, selectMoreRef) => {
   // 搜索
   watch(keywords, debounce(resetList, 300))
 
-  // 监听传参改变，需要把已选值置空，当再次展开时，重新请求接口
-  watch(() => props.otherParams, () => {
-    searchSet.init = true
-    selectVal.value = props.multiple ? [] : ''
-  }, { deep: true })
-
   // 编辑回填
   watch(() => props.editData, (editData) => {
     editData = toRaw(editData)
-    if (editData?.length) { // 编辑回填的已选择的数组
-      // 回填选项
-      list.value = editData
 
-      // 回填id
-      let editIdArr = []
-      editData.forEach((item) => {
-        editIdArr.push(item[props.value])
-      })
-      selectVal.value = props.multiple ? editIdArr : editIdArr[0]
-    }
+    searchSet.init = true // 更改值时，将init重置为true
+
+    list.value = props.defaultList.concat(editData) // 回填选项
+
+    // 回填id和text，并保存源数据
+    let editIdArr = []
+    let updateText = []
+    const idKey = props.value
+    const textKey = props.label
+    editData.forEach((item) => {
+      editIdArr.push(item[idKey])
+      updateText.push(item[textKey])
+      originListInfo[item[props.value]] = item // 保存源数据
+    })
+
+    selectVal.value = props.multiple ? editIdArr : editIdArr[0] // 回填id
+    selectedArrText.value = updateText.join(',') // 回填text
   })
 
-  return { selectVal, selectedArrText, keywords, showLoading, list, change, getList, visibleChange }
-}
-
-// 页面配置文字
-export const useTextEffect = (props) => {
-  const optionText = (id, name) => {
-    return props.showId ? `【${id}】${name}` : name
+  // 清空已选项
+  const clear = () => {
+    searchSet.init = true
+    selectVal.value = props.multiple ? [] : undefined
+    selectChange()
   }
 
-  const searchPlaceholder = computed(() => props.searchPldText ? props.searchPldText : (props.showId ? '模糊搜索ID或名称' : '模糊搜索名称'))
+  // 展示加载更多选项
+  const showLoading = computed(() => {
+    return !searchSet.isFinish
+  })
 
-  const selectPlaceholder = computed(() => props.hasAll ? '全部' : '请选择')
-
-  return { optionText, searchPlaceholder, selectPlaceholder }
+  return { selectVal, selectedArrText, keywords, list, getList, visibleChange, selectChange, clear, showLoading }
 }
